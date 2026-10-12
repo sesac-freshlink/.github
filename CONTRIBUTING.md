@@ -24,7 +24,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | 레포 | 흐름 |
 | --- | --- |
 | `infra` | `main` ← `feat/I-xx-설명` (dev 없음). PR에 `terraform plan` 결과 첨부 |
-| `gitops` | `main`만 + PR. 이미지 태그는 CI가 자동 커밋 |
+| `gitops` | `main`만. 이미지 태그는 CI가 자동 커밋 |
 | `local-dev`, `.github` | `main` ← 작업 브랜치 |
 
 **이름 쓰는 법**
@@ -59,7 +59,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 
 - **제목:** 커밋 메시지와 같은 형식. Squash merge하면 PR 제목이 `dev`의 커밋 메시지가 된다.
 - **본문:** 공통 PR 템플릿을 채운다.
-- **승인:** 필요 없다. MSA라 각자 자기 레포를 끝까지 책임지고, **담당자가 자기 PR을 직접 합친다.** 다른 사람 의견이 필요하면 담당자가 리뷰를 요청한다.
+- **PR·승인은 필수가 아니다.** MSA라 각자 자기 레포를 끝까지 책임지고, **담당자는 `main`·`dev`에 직접 push할 수 있다.** 리뷰를 받고 싶을 때나 남의 레포를 고칠 때 PR을 연다. 막혀 있는 것은 강제 push와 브랜치 삭제뿐이다.
 - **합치는 방식:** 작업 브랜치 → `dev`는 **Squash merge**, `dev` → `main`은 **Merge commit**.
 - **`dev` → `main` PR 제목:** `release: 2026-10-24 배포`
 - 이슈를 닫으려면 본문에 `Closes sesac-freshlink/inventory-service#12`
