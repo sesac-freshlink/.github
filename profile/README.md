@@ -17,22 +17,9 @@
 
 ## 아키텍처
 
-```mermaid
-flowchart LR
-    U["점주 · 고객"] --> CF["CloudFront"]
-    CF -- "/" --> S3[("S3<br/>React")]
-    CF -- "/api/*" --> ALB --> GW["gateway<br/>JWT 검증"]
-    GW --> MEM["member-service"]
-    GW --> INV["inventory-service"]
-    GW --> ORD["order-service"]
-    SIM["logistics-simulator"] -- "입고" --> Q1[["SQS FIFO<br/>inventory-commands<br/>(그룹 = 점포)"]]
-    ORD -- "예약·확정·해제" --> Q1
-    Q1 --> INV
-    INV -- "예약 결과" --> Q2[["SQS<br/>inventory-results"]]
-    Q2 --> ORD
-    ORD --> PG["토스페이먼츠"]
-    INV -. "SSE" .-> U
-```
+![FreshLink 아키텍처 구조도](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/architecture/architecture.png)
+
+번호별 흐름 설명: [docs/architecture](https://github.com/sesac-freshlink/.github/tree/main/docs/architecture)
 
 ## 레포지토리
 
@@ -61,6 +48,7 @@ flowchart LR
 | 플랫폼 | AWS EKS (t3.large × 2) · AWS Load Balancer Controller · IRSA |
 | IaC | Terraform (유지 묶음 / 클러스터 묶음 분리) |
 | CI / CD | GitHub Actions (OIDC) / ArgoCD (GitOps) |
+| 관측성 | Prometheus (지표) · Grafana (화면) · Loki + Alloy (로그) · Zipkin (분산 추적) · Actuator·Micrometer |
 | 로컬 | Docker Compose · LocalStack |
 
 ## 설계에서 고민한 것
