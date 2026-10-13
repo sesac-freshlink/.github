@@ -88,7 +88,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 
 ## 7. 비밀값
 
-AWS 키, 토스 키, JWT 서명 키는 **절대 커밋하지 않는다.** Organization Secret으로 한 번만 등록하고, AWS는 키 대신 GitHub OIDC로 IAM Role을 맡는다.
+AWS 키, 토스 키는 **절대 커밋하지 않는다.** (JWT 서명 키는 없다. 로그인 토큰은 Amazon Cognito가 서명하고 gateway는 공개 키로 검증한다.) Organization Secret으로 한 번만 등록하고, AWS는 키 대신 GitHub OIDC로 IAM Role을 맡는다.
 
 ## 8. 막히면
 

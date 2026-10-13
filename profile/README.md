@@ -25,8 +25,8 @@
 
 | 레포 | 내용 | 담당 |
 | --- | --- | --- |
-| [gateway](https://github.com/sesac-freshlink/gateway) | Spring Cloud Gateway, 라우팅·JWT 검증 | 김진아 |
-| [member-service](https://github.com/sesac-freshlink/member-service) | 회원·점포, 로그인·JWT 발급 | 김경우 |
+| [gateway](https://github.com/sesac-freshlink/gateway) | Spring Cloud Gateway, 라우팅·JWT 검증 (Cognito JWKS) | 김진아 |
+| [member-service](https://github.com/sesac-freshlink/member-service) | 회원 프로필·점포 (가입·로그인은 Amazon Cognito) | 김경우 |
 | [inventory-service](https://github.com/sesac-freshlink/inventory-service) | 상품·재고(lot)·입고·예약·폐기, SSE | 이태우 |
 | [order-service](https://github.com/sesac-freshlink/order-service) | 주문·결제·Saga | 김경우 |
 | [logistics-simulator](https://github.com/sesac-freshlink/logistics-simulator) | 가상 물류센터, 입고 쪽지 발행 | 김진아 |
@@ -41,7 +41,8 @@
 | 영역 | 기술 |
 | --- | --- |
 | 프론트엔드 | React · S3 + CloudFront(OAC) · ACM |
-| 백엔드 | Java 21 · Spring Boot · Spring Data JPA · Spring Security(JWT) · Spring Cloud Gateway · Spring Cloud AWS |
+| 백엔드 | Java 21 · Spring Boot · Spring Data JPA · Spring Security(OAuth2 Resource Server) · Spring Cloud Gateway · Spring Cloud AWS |
+| 인증 | Amazon Cognito User Pool (그룹 OWNER·CUSTOMER) · Amplify Auth · RS256 JWT를 JWKS로 검증 |
 | 데이터 | Amazon RDS MySQL (인스턴스 1대, 서비스별 스키마 분리) |
 | 메시징 | Amazon SQS (FIFO 1 + 표준 1 + DLQ 2) · Outbox · 멱등 처리 · Saga |
 | 결제 | 토스페이먼츠 (테스트) |
