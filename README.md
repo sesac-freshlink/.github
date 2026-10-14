@@ -69,10 +69,10 @@ claude plugin install freshlink-infra@freshlink
 
 `claude plugin list`로 설치를 확인하고, 새 세션에서 `/agents`를 입력하거나 "쓸 수 있는 에이전트 목록 알려줘"라고 물어 에이전트가 보이는지 본다.
 
-그다음 에이전트 이름을 넣어 부탁하면 된다.
+그다음 명령 한 줄로 PM에게 맡긴다. PM(지금 대화하는 Claude)이 에이전트들에게 일을 나눠 시키고, 단계가 끝날 때마다 "이대로 진행할까요?"를 묻는다. ok 하면 다음 단계로 넘어간다.
 
-- "backend-pm으로 재고 차감 API 계획 세워줘"
-- "infra-reviewer 에이전트로 이 PR 리뷰해줘"
+- `/backend-pm 재고 차감 API 만들어줘`
+- `/infra-pm SQS DLQ 알림 추가해줘`
 
 설명서가 바뀌면(이 레포에 PR이 합쳐지면) `claude plugin marketplace update freshlink`를 한 번 실행하고 새 세션을 연다.
 
@@ -80,7 +80,7 @@ claude plugin install freshlink-infra@freshlink
 
 | 플러그인 | 담당 | 내용 |
 | --- | --- | --- |
-| `freshlink-infra` | 김진아 | 인프라 작업(Terraform, Helm·ArgoCD, GitHub Actions) 에이전트 7개 + 파이프라인 + 명령 3개 |
-| `freshlink-backend` | 김진아 | 백엔드 작업(gateway, member·inventory·order-service, logistics-simulator, common) 에이전트 7개 + 파이프라인 + 명령 3개 |
+| `freshlink-infra` | 김진아 | 인프라 작업(Terraform, Helm·ArgoCD, GitHub Actions) PM 모드(`/infra-pm`) + 에이전트 7개 + 파이프라인 + 명령 3개 |
+| `freshlink-backend` | 김진아 | 백엔드 작업(gateway, member·inventory·order-service, logistics-simulator, common) PM 모드(`/backend-pm`) + 에이전트 7개 + 파이프라인 + 명령 3개 |
 
-에이전트마다 하는 일과 부탁하는 예, 업데이트·삭제 방법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
+PM에게 맡기는 법, 에이전트마다 하는 일, 업데이트·삭제 방법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
