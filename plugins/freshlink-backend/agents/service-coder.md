@@ -20,7 +20,7 @@ model: sonnet
   - 재고 변경은 `inventory-commands.fifo` 쪽지로만. 쪽지 DTO·Outbox·멱등 처리는 common 것을 쓴다. 비즈니스 변경과 outbox 저장은 한 트랜잭션
   - 리스너는 `processed_message`로 중복을 거른 뒤 처리한다
   - 스케줄러는 ShedLock(`@SchedulerLock`)을 단다
-  - 실시간 재고는 폴링용 조회 API만 만든다. SSE·WebSocket 코드를 만들지 않는다
+  - 실시간 재고는 프론트가 3초마다 부르는 조회 API(`GET /owner/inventory`)로 제공한다
   - 주문 저장소가 설계에서 "미확정"이면 그 부분을 임의로 MySQL/DynamoDB로 확정하지 말고 요약에 "차단"으로 적는다
   - 관측성: `spring-boot-starter-actuator`, `micrometer-registry-prometheus`, Micrometer Tracing(Brave) + Zipkin 리포터. 관리 포트 8081에서 `health`(liveness/readiness 그룹), `prometheus`를 연다. 로그는 JSON에 traceId 포함. 로컬에서는 member-service(8081)와 포트가 겹치지 않게 관리 포트를 프로필로 나눈다
   - 비밀값(DB 비밀번호, 토스 키, AWS 키)은 `${ENV}`로만. 기본값에 실값을 넣지 않는다

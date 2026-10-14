@@ -23,7 +23,7 @@ model: opus
   - 미확정 질문 목록 — 추측을 확정처럼 쓰지 않는다
 - 팀 결정을 그대로 따른다:
   - 인증은 Amazon Cognito. gateway가 ID 토큰을 검증하고 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘긴다. 서비스는 토큰을 다시 검증하지 않는다
-  - 실시간 재고(S-15)는 MVP에서 **3초 폴링**(`GET /owner/inventory`). SSE·WebSocket은 범위 밖(2순위, Redis와 함께). inventory-service README에 SSE가 남아 있으면 "문서 불일치"로 적는다
+  - 실시간 재고(S-15)는 점주 화면이 **3초마다** `GET /owner/inventory`를 조회하는 폴링이다
   - 주문 저장소에 DynamoDB를 쓸지는 **검토 중이고 정해지지 않았다.** 주문 저장 방식이 걸리는 요청이면 미확정 질문으로 올린다. MySQL·DynamoDB 어느 쪽도 확정처럼 쓰지 않는다
 - 과범위 금지: 요청에 없는 API·테이블·리팩터링을 넣지 않는다.
 

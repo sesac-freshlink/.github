@@ -20,7 +20,6 @@ model: sonnet
   - **클라이언트가 보낸 `X-User-Id`, `X-User-Role`, `X-Store-Id`를 먼저 지우고** 토큰 값으로 다시 채운다: `sub` → `X-User-Id`, `cognito:groups` → `X-User-Role`, `custom:storeId` → `X-Store-Id`(있을 때만). 공개 경로에서도 지운다
   - 소유권 확인은 하지 않는다 (서비스 몫). gateway는 DB·비밀 키를 갖지 않는다
   - 관측성: Actuator(관리 포트 8081, `health`·`prometheus`), Micrometer Tracing → Zipkin(traceId가 서비스로 전파되는지), JSON 로그. 토큰 원문·헤더 전체를 로그에 남기지 않는다
-  - 실시간 재고는 폴링이라 SSE·WebSocket용 라우트 설정(타임아웃 연장 등)을 MVP에 넣지 않는다
 - 테스트: `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebTestClient`, 토큰은 `SecurityMockServerConfigurers.mockJwt()` 또는 테스트용 RSA 키로 만든 JWT. 반드시 확인: 토큰 없음 401, `aud` 다름 401, `token_use = access` 401, CUSTOMER로 `/api/owner/**` 403, 위조 `X-User-Id`가 지워지고 토큰 값으로 바뀜, 공개 경로 통과. 뒤 서비스는 WireMock이나 `MockWebServer`로 흉내 낸다.
 - 자체 확인: `./gradlew build`. 실패를 남긴 채 끝내지 않는다.
 - Cognito 그룹·클레임 이름이 바뀌어야 하면 임의로 바꾸지 말고 요약에 적는다 (infra `modules/cognito`, frontend `claims.ts`와 함께 바뀌어야 한다).

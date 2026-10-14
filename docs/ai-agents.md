@@ -124,7 +124,7 @@ pm → architect → [사람 승인] → common-coder → service-coder(레포�
 
 - 로그인은 Amazon Cognito. 프론트가 ID 토큰을 보내고 **gateway만** 토큰을 검증한다(JWKS, RS256, `aud`). 역할은 `cognito:groups`, 점포는 `custom:storeId`. gateway가 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘기고, 서비스는 토큰을 다시 검증하지 않는다.
 - 재고를 바꾸는 일은 전부 `inventory-commands.fifo` 쪽지로. Outbox와 멱등 처리는 common을 쓴다.
-- 실시간 재고는 MVP에서 **3초 폴링**이다. SSE·WebSocket은 2순위(Redis와 함께)라 만들지 않는다.
+- 실시간 재고는 점주 화면이 **3초마다** `GET /owner/inventory`를 조회하는 폴링이다.
 - 주문 저장소에 DynamoDB를 쓸지는 **아직 정하지 않았다.** 에이전트는 어느 쪽도 가정하지 않고, 걸리면 물어본다.
 - 배포(GitHub Actions → ECR → gitops → ArgoCD)와 관측성 설정(gitops)은 `freshlink-infra` 몫이다. 백엔드 에이전트는 필요한 환경 변수·권한을 "freshlink-infra로 할 일"로 알려 준다.
 

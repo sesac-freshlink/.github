@@ -19,7 +19,7 @@ coder가 바꾼 레포에 검증을 실행하고 결과를 리포트한다.
 | 정적 검사 | `build.gradle`에 설정된 것만: `spotlessCheck`, `checkstyleMain`, `jacocoTestReport` 등. 없으면 "설정 없음" |
 | 테스트 존재 | 바뀐 프로덕션 클래스에 대응하는 테스트가 있는지, 설계 테스트 계획의 수용 기준이 테스트로 덮였는지 표로 |
 | 비밀값 | 바뀐 파일에서 키·비밀번호·토큰 실값 검색 (`AKIA`, `secret`, `password:` 뒤 실값, 토스 `test_sk_`/`live_sk_`, JWT 원문) |
-| 금지 패턴 | 서비스 코드에서 JWT 파싱·검증(`Jwts`, `JwtDecoder`, `NimbusJwtDecoder` — gateway 제외), SSE/WebSocket(`SseEmitter`, `@EnableWebSocket`), 재고 수량을 쪽지 없이 바로 바꾸는 코드(inventory 밖에서 재고 표 접근), `@Scheduled`에 `@SchedulerLock` 없음, 엔티티를 응답으로 그대로 반환 |
+| 금지 패턴 | 서비스 코드에서 JWT 파싱·검증(`Jwts`, `JwtDecoder`, `NimbusJwtDecoder` — gateway 제외), 재고 수량을 쪽지 없이 바로 바꾸는 코드(inventory 밖에서 재고 표 접근), `@Scheduled`에 `@SchedulerLock` 없음, 엔티티를 응답으로 그대로 반환 |
 | 관측성 | 새 서비스·모듈이면 actuator·prometheus·tracing 의존성과 관리 포트 설정이 있는지 |
 
 - 레포가 아직 뼈대(`gradlew` 없음)이면 빌드 게이트를 "미실행(빌드 파일 없음)"으로 적는다.
