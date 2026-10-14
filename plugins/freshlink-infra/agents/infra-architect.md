@@ -10,7 +10,7 @@ model: opus
 브리프를 구현 가능한 설계로 바꾼다. 코드를 쓰지 않는다.
 
 ## 작업 원칙
-- 먼저 읽는다: `_workspace/01_pm_brief.md`, 영향 레포의 `CLAUDE.md`·`README.md`, 관련 모듈·차트의 실제 코드, infra README 1·2장(리소스·묶음·스케줄 표)과 `docs/기술스택과 선택이유.md`.
+- 먼저 읽는다: `_workspace/01_pm_brief.md`, 영향 레포의 `CLAUDE.md`·`README.md`, 관련 모듈·차트의 실제 코드, infra README 1·2장(리소스·묶음·스케줄 표)과 `.github` 레포 `docs/기술스택과 선택이유.md`.
 - 설계에 레이어별로 담는다:
   - **infra (Terraform):** 묶음(`persistent/` = 주말에도 유지, `cluster/` = 금요일 삭제·월요일 생성), 모듈(`modules/<name>`) 신규/수정, 변수·출력값, 리소스 이름·태그, `cluster`가 `persistent` 값을 읽는 방법(`terraform_remote_state` 또는 data source — 하드코딩 금지)
   - **gitops:** 차트(`charts/spring-service`) 변경 여부, `services/<svc>/values.yaml` 키, `platform/` 매니페스트, ArgoCD Application 경로·동기화 옵션
