@@ -28,7 +28,7 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 | 실시간 재고 | 점주 화면이 3초마다 `GET /owner/inventory` 조회 (폴링) |
 | 주문 저장소 | DynamoDB 도입 **검토 중, 미정**. 어느 쪽도 가정하지 않고 걸리면 사용자에게 묻는다 |
 | 배포 | GitHub Actions(`.github` 재사용 워크플로) → ECR → gitops 이미지 태그 커밋 → ArgoCD → EKS. 백엔드 에이전트는 gitops·infra를 고치지 않는다 (`freshlink-infra` 몫) |
-| 관측성 | Actuator·Micrometer → Prometheus(관리 포트 8081), Micrometer Tracing → Zipkin, JSON 로그(traceId) → Loki |
+| 관측성 | Actuator·Micrometer → Prometheus(앱 포트의 `/actuator/prometheus`, 관리 포트 없음. 쿠버네티스는 모든 컨테이너 8080, 로컬은 8080~8084. gateway는 외부 `/actuator` 차단), Micrometer Tracing → Zipkin, JSON 로그(traceId) → Loki |
 
 ## 파이프라인
 

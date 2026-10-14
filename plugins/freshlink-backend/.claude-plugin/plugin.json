@@ -1,6 +1,6 @@
 {
   "name": "freshlink-backend",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "FreshLink 백엔드(gateway, member/inventory/order-service, logistics-simulator, common) 작업용 서브에이전트(pm, architect, gateway/service/common coder, verifier, reviewer)와 파이프라인 스킬",
   "author": {
     "name": "김진아"
