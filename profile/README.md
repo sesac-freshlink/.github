@@ -34,7 +34,6 @@
 | [common](https://github.com/sesac-freshlink/common) | Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 |
 | [infra](https://github.com/sesac-freshlink/infra) | Terraform (persistent / cluster) | 김진아 |
 | [gitops](https://github.com/sesac-freshlink/gitops) | Helm 차트, 서비스별 values, ArgoCD | 김진아 |
-| [local-dev](https://github.com/sesac-freshlink/local-dev) | Docker Compose (MySQL + LocalStack), 더미 데이터 | 김진아 |
 
 ## 기술 스택
 
@@ -50,7 +49,7 @@
 | IaC | Terraform (유지 묶음 / 클러스터 묶음 분리) |
 | CI / CD | GitHub Actions (OIDC) / ArgoCD (GitOps) |
 | 관측성 | Prometheus (지표) · Grafana (화면) · Loki + Alloy (로그) · Zipkin (분산 추적) · Actuator·Micrometer |
-| 로컬 | Docker Compose · LocalStack |
+| 환경 | AWS dev · prod (같은 Terraform 모듈) |
 
 ## 설계에서 고민한 것
 

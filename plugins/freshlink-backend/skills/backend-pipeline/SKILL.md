@@ -14,7 +14,7 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 ```
 ⛔ 남의 레포(CODEOWNERS 담당자가 사용자가 아닌 레포)의 main·dev에 push 금지. 작업 브랜치 + PR로만
 ⛔ git push --force, git reset --hard, git clean, 브랜치 삭제, 히스토리 재작성 금지
-⛔ DB DROP / TRUNCATE / 조건 없는 DELETE, docker compose down -v, 큐 purge 금지
+⛔ DB DROP / TRUNCATE / 조건 없는 DELETE, 큐 purge 금지
 ⛔ aws CLI로 리소스 생성·수정·삭제 금지 (Cognito 사용자·그룹 포함). 읽기도 사용자 확인 후
 ⛔ 비밀값(DB 비밀번호, 토스 키, AWS 키, 토큰 원문)을 커밋·출력하지 않는다
 ⛔ 커밋·push·PR은 확인 ③에서 사용자가 ok 한 뒤에만. 서브에이전트는 커밋하지 않는다
@@ -140,7 +140,7 @@ ok / 고칠 점 / 멈춰
 백엔드 기능은 보통 레포 여러 개에 걸친다 (예: 주문 = common DTO + order-service + inventory-service + gateway 라우트). 레포는 한 폴더 아래 나란히 클론되어 있다 (예: `C:\fresh-link\repos\{gateway,member-service,inventory-service,order-service,logistics-simulator,common}`).
 
 - `_workspace/`는 **세션을 연 레포 루트**에 만든다. 다른 레포 파일을 고쳐도 산출물은 여기 둔다.
-- common 변경을 서비스에서 시험할 때는 `./gradlew publishToMavenLocal` 후 서비스가 `mavenLocal()`을 쓰게 한다 (커밋하지 않는 로컬 설정).
+- common 변경을 서비스에서 시험할 때는 `-SNAPSHOT` 버전으로 GitHub Packages에 올려 서비스가 그 버전을 쓰게 한다.
 - 각 레포 루트 `CLAUDE.md`가 있으면 그 레포를 고치기 전에 읽는다. 레포 규칙이 이 문서보다 우선이다.
 
 ## 기타

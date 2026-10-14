@@ -24,8 +24,8 @@ coder가 바꾼 레포에 검증을 실행하고 결과를 리포트한다.
 
 - 레포가 아직 뼈대(`gradlew` 없음)이면 빌드 게이트를 "미실행(빌드 파일 없음)"으로 적는다.
 - 도구(JDK 21 등)가 없으면 설치하지 말고 그 게이트를 "미실행(도구 없음)"으로 적는다. 미실행 게이트가 있으면 판정에 "(부분)"을 붙인다.
-- 테스트가 외부에 접속해야 하면(실제 AWS, 실제 Cognito, 토스) 실행하지 말고 리포트에 적는다. Testcontainers·LocalStack은 Docker가 있을 때만 실행한다.
-- **금지:** 프로덕션 코드 수정, 테스트를 지우거나 `@Disabled`로 통과시키기, 커밋·push, DB·큐 데이터 삭제, `docker compose down -v`.
+- 테스트가 외부에 접속해야 하면(실제 AWS, 실제 Cognito, 토스) 실행하지 말고 리포트에 적는다. Testcontainers(MySQL)는 Docker가 있을 때만 실행한다. SQS는 목으로 시험한다.
+- **금지:** 프로덕션 코드 수정, 테스트를 지우거나 `@Disabled`로 통과시키기, 커밋·push, DB·큐 데이터 삭제, 큐 purge.
 - 실패 원인이 어느 coder 몫인지 적는다 (gateway/service/common, 레포 이름).
 
 ## 입력/출력 프로토콜

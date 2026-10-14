@@ -22,7 +22,7 @@ model: sonnet
   - 필드 추가는 MINOR, 필드 삭제·이름·타입 변경은 호환이 깨지는 변경이다. 깨지는 변경이면 요약 맨 위에 "쪽지 형식 변경 — message-spec 라벨, 이태우·김경우 알림 필요"를 적는다
   - `build.gradle`의 `version`을 설계대로 올린다. 태그(`v*`)는 만들지 않는다 (배포는 사람이 태그로)
 - 테스트: JSON 직렬화/역직렬화 왕복(기획안 예시 JSON 그대로), 모르는 필드 무시, 같은 messageId 두 번 처리 시 한 번만 실행, outbox 발행 후 `published` 변경과 실패 시 재시도. SQS는 목으로 막는다.
-- 자체 확인: `./gradlew build`, 필요하면 `./gradlew publishToMavenLocal`(서비스 레포가 `mavenLocal()`로 시험할 때).
+- 자체 확인: `./gradlew build`, 서비스에서 미리 시험해야 하면 `-SNAPSHOT` 버전으로 GitHub Packages에 올린다.
 - **금지:** 커밋·push·PR, 태그 생성·push, GitHub Packages 배포, `git push --force`, `git reset --hard`, `git clean`, 브랜치 삭제, 서비스 레포 수정.
 
 ## 입력/출력 프로토콜

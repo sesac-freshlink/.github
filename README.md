@@ -96,7 +96,7 @@ claude plugin install freshlink-backend@freshlink
 claude plugin install freshlink-infra@freshlink
 ```
 
-**2. 레포 폴더에서 로컬 세션 열기.** Claude 데스크톱 앱에서 새 생성 → 환경 **로컬** → 레포 폴더(예: `C:\fresh-link\repos\inventory-service`)를 고른다. 터미널이면 그 폴더에서 `claude`를 실행한다.
+**2. 레포 폴더에서 내 PC 세션 열기.** Claude 데스크톱 앱에서 새 생성 → 환경을 클라우드가 아닌 **내 PC**로 → 레포 폴더(예: `C:\fresh-link\repos\inventory-service`)를 고른다. 터미널이면 그 폴더에서 `claude`를 실행한다.
 
 **3. PM에게 맡기기.**
 
@@ -106,7 +106,7 @@ claude plugin install freshlink-infra@freshlink
 | 인프라 (infra, gitops, 워크플로) | `/infra-pm <요청>` | `/infra-pm SQS DLQ 알림 추가해줘` |
 | 끊긴 작업 이어 하기 | `/backend-pm 이어서` | 마지막으로 끝난 단계 다음부터 다시 시작 |
 
-> claude.ai 프로젝트 채팅·스레드에서는 `/backend-pm` 같은 명령이 동작하지 않는다. 반드시 **내 PC의 로컬 세션**에서 쓴다.
+> claude.ai 프로젝트 채팅·스레드에서는 `/backend-pm` 같은 명령이 동작하지 않는다. 반드시 **내 PC에서 여는 Claude Code 세션**에서 쓴다.
 >
 > 이 레포가 바뀌면 `claude plugin marketplace update freshlink`를 한 번 실행하고 새 세션을 연다.
 

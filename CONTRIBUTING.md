@@ -25,7 +25,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | --- | --- |
 | `infra` | `main` ← `feat/I-xx-설명` (dev 없음). PR에 `terraform plan` 결과 첨부 |
 | `gitops` | `main`만. 이미지 태그는 CI가 자동 커밋 |
-| `local-dev`, `.github` | `main` ← 작업 브랜치 |
+| `.github` | `main` ← 작업 브랜치 |
 
 **이름 쓰는 법**
 
@@ -51,7 +51,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | `fix(E-04): 같은 messageId 중복 반영 수정` | 버그 |
 | `refactor: 재고 계산 로직 분리` | ID 없는 작업 |
 | `chore: common 0.2.0으로 올림` | 설정·의존성 |
-| `docs: 로컬 실행 방법 추가` | 문서 |
+| `docs: dev 환경 실행 방법 추가` | 문서 |
 
 종류: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 

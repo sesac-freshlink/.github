@@ -28,7 +28,7 @@ model: sonnet
 - 테스트를 같이 쓴다 (설계의 테스트 계획 기준): JUnit 5, AssertJ, `@WebMvcTest`(헤더·403·400), `@DataJpaTest`, 쪽지 멱등(같은 messageId 두 번), 경계값(유통기한 당일·경과). 외부(SQS·토스·Cognito)는 목으로 막는다. 무의미한 커버리지용 테스트는 쓰지 않는다.
 - 자체 확인: `./gradlew build` (컴파일 + 테스트). 실패를 남긴 채 끝내지 않는다. 고칠 수 없으면 요약에 원인을 적는다.
 - 설계에 없는 public API·테이블·라이브러리를 임의로 추가하지 않는다. 필요하면 요약에 "설계 이탈"로 적어 PM에게 알린다.
-- **금지:** 커밋·push·PR(PM이 사용자 요청을 받아 따로 한다), `git push --force`, `git reset --hard`, `git clean`, 브랜치 삭제, DB `DROP`/`TRUNCATE`/조건 없는 `DELETE`, `docker compose down -v`, aws CLI로 리소스 변경, 다른 레포 수정(설계가 지정한 경우 빼고).
+- **금지:** 커밋·push·PR(PM이 사용자 요청을 받아 따로 한다), `git push --force`, `git reset --hard`, `git clean`, 브랜치 삭제, DB `DROP`/`TRUNCATE`/조건 없는 `DELETE`, 큐 purge, aws CLI로 리소스 변경, 다른 레포 수정(설계가 지정한 경우 빼고).
 
 ## 입력/출력 프로토콜
 - 입력: `_workspace/02_architect_design.md`, 대상 레포 이름, (재호출 시) `04_verify_report.md`·`05_reviewer_report.md`

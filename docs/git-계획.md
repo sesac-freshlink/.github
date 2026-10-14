@@ -2,7 +2,7 @@
 
 작성일: 2026-10-12 · 기준: [기획안-및-설계도.md](./기획안-및-설계도.md)
 
-GitHub Organization을 만들고 MSA 서비스별로 레포를 나눌 때 쓸 이름과 규칙을 정리했다. 결론은 **Organization `sesac-freshlink` + 레포 11개 + 기존 브랜치 규칙(`main` ← `dev` ← `feat/기능ID-설명`) 유지**다.
+GitHub Organization을 만들고 MSA 서비스별로 레포를 나눌 때 쓸 이름과 규칙을 정리했다. 결론은 **Organization `sesac-freshlink` + 레포 10개 + 기존 브랜치 규칙(`main` ← `dev` ← `feat/기능ID-설명`) 유지**다.
 
 이름을 정할 때 지킨 원칙은 세 가지다.
 
@@ -43,7 +43,6 @@ Organization 표시 이름(Display name)은 `FreshLink`로 둔다. URL에 쓰이
 | `common` | 공통 모듈: Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 | GitHub Packages (Maven) |
 | `infra` | Terraform (persistent / cluster 묶음) | 김진아 | `terraform apply` |
 | `gitops` | Helm 차트 + 서비스별 values + ArgoCD Application | 김진아 | ArgoCD가 읽어 감 |
-| `local-dev` | Docker Compose (MySQL + LocalStack), 더미 데이터 SQL | 김진아 | 로컬 |
 | `.github` | Organization 소개(README), 공통 PR·이슈 템플릿, 공통 GitHub Actions 워크플로 | 김진아 | 없음 |
 
 ### 2-1. 이렇게 나눈 이유
@@ -52,7 +51,6 @@ Organization 표시 이름(Display name)은 `FreshLink`로 둔다. URL에 쓰이
 - **`common`은 별도 레포 + 라이브러리 배포.** inventory와 order가 같은 Outbox·멱등 코드를 쓴다. 복사해서 쓰면 한쪽만 고쳐지는 사고가 난다. `common`을 GitHub Packages에 버전을 붙여 올리고, 각 서비스는 `build.gradle`에서 버전을 지정해 가져다 쓴다.
 - **`infra`와 `gitops`를 나눈다.** `infra`는 "AWS에 무엇이 있는가"(VPC, EKS, RDS, SQS), `gitops`는 "클러스터 안에 무엇이 떠 있는가"(파드 개수, 이미지 버전, 환경 변수)다. 바뀌는 주기와 위험도가 다르다. 이미지 태그 하나 바꿀 때마다 Terraform 레포를 건드리지 않게 한다.
 - **`frontend`는 하나.** 점주·고객 화면이 한 React 앱 안에서 라우팅으로 나뉘어 있으므로 레포도 하나다.
-- **`local-dev`를 따로 둔다.** 팀원은 이 레포 하나만 받아 `docker compose up` 하면 DB와 큐가 뜬다. 각 서비스 레포에 Compose 파일이 흩어지면 버전이 어긋난다.
 
 ### 2-2. 레포 안 폴더 구조 (서비스 외)
 
@@ -78,7 +76,7 @@ gitops/
 
 `persistent`와 `cluster`는 Terraform state 키를 따로 둔다(`persistent/terraform.tfstate`, `cluster/terraform.tfstate`). 그래야 금요일에 `cluster`만 지워도 RDS·ECR은 그대로 남는다.
 
-### 2-3. 로컬 폴더 배치
+### 2-3. PC 폴더 배치
 
 모든 레포를 한 폴더 아래에 나란히 받는다.
 
@@ -93,7 +91,6 @@ C:\fresh-link\
 ├── common\
 ├── infra\
 ├── gitops\
-├── local-dev\
 └── docs\              # 기획안·설계도 (레포 아님, 또는 .github 레포로 옮김)
 ```
 
@@ -173,7 +170,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | --- | --- | --- |
 | `infra` | `main` ← `feat/I-xx-설명` (dev 없음) | 클러스터가 하나뿐이라 '통합 환경'이 따로 없다. PR에 `terraform plan` 결과를 붙이고, 합친 뒤 `apply`한다 |
 | `gitops` | `main`만 | `main`이 곧 '클러스터에 떠 있어야 할 상태'다. 이미지 태그 변경은 CI가 자동으로 커밋하고, 사람이 바꾸는 값(파드 수, 환경 변수)은 담당자가 직접 커밋한다 |
-| `local-dev`, `.github` | `main` ← 작업 브랜치 | 배포가 없다 |
+| `.github` | `main` ← 작업 브랜치 | 배포가 없다 |
 
 ### 4-4. 브랜치 보호 (레포마다 규칙 세트로 건다)
 
@@ -203,7 +200,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | `fix(E-04): 같은 messageId 중복 반영 수정` | 버그 |
 | `refactor: 재고 계산 로직 분리` | ID 없는 작업 |
 | `chore: common 0.2.0으로 올림` | 설정·의존성 |
-| `docs: 로컬 실행 방법 추가` | 문서 |
+| `docs: dev 환경 실행 방법 추가` | 문서 |
 
 종류(`feat`, `fix`, `refactor`, `chore`, `docs`, `test`)는 브랜치 접두사와 같은 단어를 쓴다. 요약은 한글로 써도 된다. 브랜치 이름과 달리 커밋 메시지는 사람이 읽는 글이다.
 
@@ -267,7 +264,7 @@ flowchart LR
 | GitHub 팀 | 사람 | 권한 |
 | --- | --- | --- |
 | `maintainers` | 김진아 | Organization Owner, 모든 레포 Admin |
-| `backend` | 이태우, 김경우, 김진아 | 서비스 5개·`common`·`frontend`·`local-dev` Write |
+| `backend` | 이태우, 김경우, 김진아 | 서비스 5개·`common`·`frontend` Write |
 | `infra` | 김진아 (+ 리뷰용으로 이태우, 김경우 Read) | `infra`·`gitops` Write |
 
 각 레포에 `CODEOWNERS`를 둬서 레포 담당자를 표시한다. PR을 열 경우 담당자가 리뷰어로 자동 지정되어 알림을 받는다.
@@ -276,7 +273,7 @@ flowchart LR
 | --- | --- |
 | `inventory-service` | 이태우 |
 | `member-service`, `order-service` | 김경우 |
-| `gateway`, `logistics-simulator`, `common`, `infra`, `gitops`, `local-dev` | 김진아 |
+| `gateway`, `logistics-simulator`, `common`, `infra`, `gitops` | 김진아 |
 | `frontend` | `/src/owner/inventory/**` 이태우 · `/src/customer/order/**` 김경우 · 나머지 김진아 |
 
 PR 필수, 승인 필수, CODEOWNERS 승인 필수는 걸지 않는다. 담당자가 자기 레포에 직접 push한다(기획안 8-2 규칙, 2026-10-12 결정).
@@ -290,7 +287,7 @@ PR 필수, 승인 필수, CODEOWNERS 승인 필수는 걸지 않는다. 담당�
 1. Organization `sesac-freshlink` 생성(2026-10-12 완료), 팀원 초대, 팀 3개 생성
 2. `.github` 레포: Organization README, PR·이슈 템플릿, 라벨
 3. 레포마다 `main`·`dev` 보호 규칙 적용 (강제 push·브랜치 삭제 금지만. 직접 push 허용)
-4. `common`, `local-dev`, `infra`, `gitops` 생성 (1~2주 차에 김진아가 먼저 끝낼 것들)
+4. `common`, `infra`, `gitops` 생성 (1~2주 차에 김진아가 먼저 끝낼 것들)
 5. 서비스 5개 + `frontend` 생성, 각 레포에 `dev` 브랜치 만들고 기본 브랜치를 `dev`로 설정
 6. 설계도 2장 ECR 이름을 3장 표대로 수정
 7. Project 보드 `FreshLink MVP` 생성, 기획안 6장 기능 ID마다 이슈 등록

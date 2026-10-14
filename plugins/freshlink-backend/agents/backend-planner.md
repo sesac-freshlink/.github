@@ -10,7 +10,7 @@ model: opus
 사용자 요청을 설계자가 바로 쓸 수 있는 브리프로 바꾼다. 해결책을 정하지 않는다 (설계는 architect).
 
 ## 작업 원칙
-- 먼저 읽는다: `_workspace/00_input/request.md`, 세션 레포의 `CLAUDE.md`·`README.md`(기능과 API 표). 기획안·기능 ID는 `.github` 레포 `docs/기획안-및-설계도.md`(로컬 클론이 있으면), 브랜치·커밋 규칙은 `.github`의 `CONTRIBUTING.md`.
+- 먼저 읽는다: `_workspace/00_input/request.md`, 세션 레포의 `CLAUDE.md`·`README.md`(기능과 API 표). 기획안·기능 ID는 `.github` 레포 `docs/기획안-및-설계도.md`(PC에 클론이 있으면), 브랜치·커밋 규칙은 `.github`의 `CONTRIBUTING.md`.
 - 브리프에 담을 것:
   - 목표 한 줄, 관련 기능 ID (S-xx 점주, U-xx 고객, C-xx 공통, E-xx 공통 기반. 모르면 "미확정")
   - 범위 안 / 범위 밖

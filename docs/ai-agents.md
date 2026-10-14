@@ -32,16 +32,16 @@ PM: 브랜치·커밋·push·PR → PR 링크와 사람이 할 일 보고
 
 ## 0. 처음이라면: 어디서 쓰나
 
-**에이전트는 내 PC에서 여는 "로컬" Claude Code 세션에서만 쓴다.**
+**에이전트는 내 PC에서 여는 Claude Code 세션에서만 쓴다.**
 
-claude.ai의 프로젝트 채팅·스레드(웹 화면에서 대화하는 곳)에서는 `/plugin`, `/agents`, `/backend-pm` 같은 명령과 에이전트가 동작하지 않는다. 프로젝트 채팅은 계획을 세우거나 PR을 만들어 달라고 부탁하는 곳이고, 에이전트로 코드를 짜고 리뷰하는 일은 아래처럼 로컬 세션을 열어서 한다.
+claude.ai의 프로젝트 채팅·스레드(웹 화면에서 대화하는 곳)에서는 `/plugin`, `/agents`, `/backend-pm` 같은 명령과 에이전트가 동작하지 않는다. 프로젝트 채팅은 계획을 세우거나 PR을 만들어 달라고 부탁하는 곳이고, 에이전트로 코드를 짜고 리뷰하는 일은 아래처럼 내 PC 세션을 열어서 한다.
 
-### 로컬 세션 여는 법
+### 내 PC 세션 여는 법
 
 **A. Claude 데스크톱 앱**
 
 1. **새 생성**(새 세션)을 누른다.
-2. 환경을 **로컬**로 고른다.
+2. 환경을 클라우드가 아닌 **내 PC**로 고른다.
 3. 작업할 레포 폴더를 고른다. 예: `C:\fresh-link\repos\inventory-service`
 4. 입력창에 `/backend-pm 요청 내용`을 친다.
 
@@ -221,7 +221,7 @@ planner → architect → ① → common-coder → service-coder(레포별) → 
 
 - 담당자가 다른 레포의 `main`·`dev`에 직접 push — 작업 브랜치 + PR로만
 - `git push --force`, `git reset --hard`, `git clean`, 브랜치 삭제
-- DB `DROP`·`TRUNCATE`·조건 없는 `DELETE`, `docker compose down -v`
+- DB `DROP`·`TRUNCATE`·조건 없는 `DELETE`, 큐 purge
 - AWS 리소스(Cognito 포함) 생성·수정·삭제, common 태그 배포
 - 확인 ③ 전에 커밋·push·PR
 
@@ -236,7 +236,7 @@ planner → architect → ① → common-coder → service-coder(레포별) → 
 
 ### 검증 도구
 
-JDK 21과 각 레포의 Gradle Wrapper(`./gradlew`)가 필요하다. 레포가 아직 뼈대(빌드 파일 없음)면 verifier는 빌드 게이트를 "미실행"으로 적는다. Testcontainers·LocalStack 테스트는 Docker Desktop이 켜져 있을 때만 돈다.
+JDK 21과 각 레포의 Gradle Wrapper(`./gradlew`)가 필요하다. 레포가 아직 뼈대(빌드 파일 없음)면 verifier는 빌드 게이트를 "미실행"으로 적는다. Testcontainers(MySQL) 테스트는 Docker Desktop이 켜져 있을 때만 돈다. SQS는 목으로 시험한다.
 
 ## 5. freshlink-infra
 
@@ -314,7 +314,7 @@ PM 없이 한 가지 일만 시키고 싶을 때는 에이전트 이름을 넣�
 
 | 증상 | 해결 |
 | --- | --- |
-| 프로젝트 채팅에서 `/plugin`, `/backend-pm`이 안 된다 | 정상이다. 로컬 세션(0장)에서 쓴다 |
+| 프로젝트 채팅에서 `/plugin`, `/backend-pm`이 안 된다 | 정상이다. 내 PC 세션(0장)에서 쓴다 |
 | `/backend-pm`이 명령 목록에 없다 | `claude plugin marketplace update freshlink` → 새 세션. 그래도 없으면 `claude plugin list`로 설치 확인 → 2장 |
 | `backend-pm` 에이전트가 없어졌다 | 이름이 `backend-planner`로 바뀌었다 (인프라는 `infra-planner`). PM은 이제 명령(`/backend-pm`)이다 |
 | PM이 확인 없이 계속 간다 / 매번 묻는다 | `/backend-reread`(인프라 `/reread`)로 스킬을 다시 읽게 한다 |
