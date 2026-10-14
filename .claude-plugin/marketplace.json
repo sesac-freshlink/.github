@@ -1,0 +1,16 @@
+{
+  "name": "freshlink",
+  "owner": {
+    "name": "sesac-freshlink"
+  },
+  "metadata": {
+    "description": "FreshLink 팀 공용 Claude Code 플러그인 모음"
+  },
+  "plugins": [
+    {
+      "name": "freshlink-infra",
+      "source": "./plugins/freshlink-infra",
+      "description": "인프라(infra, gitops, .github 워크플로) 작업용 서브에이전트 7개와 파이프라인, 명령"
+    }
+  ]
+}
