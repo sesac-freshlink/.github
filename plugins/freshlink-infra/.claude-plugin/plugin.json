@@ -1,0 +1,8 @@
+{
+  "name": "freshlink-infra",
+  "version": "0.1.0",
+  "description": "FreshLink 인프라 작업용 서브에이전트(pm, architect, iac/gitops/pipeline coder, verifier, reviewer)와 파이프라인 스킬",
+  "author": {
+    "name": "김진아"
+  }
+}
