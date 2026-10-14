@@ -10,6 +10,7 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`docs/기획안-및-설계도.md`](docs/기획안-및-설계도.md) | MVP 기획안(기능·흐름·담당·데이터 모델·메시지 명세) |
 | [`docs/aws-리소스-계획.md`](docs/aws-리소스-계획.md) | AWS 리소스 계획(dev·prod 환경, 노드·RDS 산정, 네트워크, 비용, 켜고 끄는 일정, Terraform 모듈) |
 | [`docs/기술스택과 선택이유.md`](docs/%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC%20%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) | 도구별 선택 이유 (관측성 3-5, 켜고 끄기 3-6, Cognito 3-7 등) |
+| [`docs/백엔드-공통작업-인수인계.md`](docs/백엔드-공통작업-인수인계.md) | 백엔드 공통 기준(Java 21·Spring Boot 4.0·프로필·포트 8080), 서비스 레포 Spring 뼈대, common v0.1.0 작업 안내 |
 | [`docs/git-계획.md`](docs/git-계획.md) | Organization·레포 구성, 브랜치·태그·CI/CD·시크릿 규칙 |
 | [`docs/architecture/`](docs/architecture) | 아키텍처 구조도(PNG·SVG)와 번호별 흐름 설명, 구조도 계획([`구조도-계획.md`](docs/architecture/구조도-계획.md))과 생성 스크립트 |
 | [`docs/프로젝트-보드-사용법.md`](docs/프로젝트-보드-사용법.md) | 프로젝트 보드·이슈·브랜치·커밋 연동 사용법 |

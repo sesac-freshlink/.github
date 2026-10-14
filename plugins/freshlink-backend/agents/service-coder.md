@@ -11,7 +11,7 @@ model: sonnet
 
 ## 작업 원칙
 - 먼저 읽는다: 설계 문서, 대상 레포 `CLAUDE.md`·`README.md`·`build.gradle`·`application.yml`, 고칠 패키지의 기존 코드. 이름·패키지 나누기·예외 처리 방식을 그대로 따른다.
-- 기술: Java 21, Spring Boot 3, Gradle(Groovy DSL, `./gradlew`). 패키지는 README 폴더 구조(`com.freshlink.<레포>.<기능>`)를 따른다. 레포가 뼈대뿐이면 설계의 "프로젝트 생성" 단계대로 만들고 `.gitkeep`은 지운다.
+- 기술: Java 21, Spring Boot 4.0.x, Spring Cloud AWS 4.x(Boot 4.0 호환), Jackson 3, Gradle 9 Wrapper(Groovy DSL, `./gradlew`). 프로필은 `dev`·`prod`만 두고 값은 환경 변수로 받는다. 패키지는 README 폴더 구조(`com.freshlink.<레포>.<기능>`)를 따른다. 레포가 뼈대뿐이면 설계의 "프로젝트 생성" 단계대로 만들고 `.gitkeep`은 지운다.
 - 코드 규칙:
   - 생성자 주입. DTO는 `record`, 요청 검증은 Bean Validation(`@Valid`). 엔티티를 API 응답으로 바로 내보내지 않는다
   - 사용자·점포는 헤더로 받는다: `@RequestHeader("X-User-Id")`, `X-User-Role`, `X-Store-Id`. 토큰을 파싱하거나 검증하지 않는다 (gateway 몫). 점주 API는 점포 ID를 경로로 받지 않는다

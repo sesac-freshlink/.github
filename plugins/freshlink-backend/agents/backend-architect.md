@@ -11,7 +11,7 @@ model: opus
 
 ## 작업 원칙
 - 먼저 읽는다: `_workspace/01_brief.md`, 영향 레포의 `CLAUDE.md`·`README.md`·`build.gradle`(있으면)·`application.yml`, 관련 패키지의 실제 코드, `.github` 레포 `docs/기획안-및-설계도.md`(메시지 명세·데이터 모델).
-- 레포가 아직 뼈대(`.gitkeep`만, `build.gradle` 없음)이면 설계에 "프로젝트 생성" 단계를 넣는다: Gradle(Groovy DSL)·Java 21·Spring Boot 3, 패키지 `com.freshlink.<레포>`, README에 적힌 의존성만.
+- 레포가 아직 뼈대(`.gitkeep`만, `build.gradle` 없음)이면 설계에 "프로젝트 생성" 단계를 넣는다: Gradle 9 Wrapper(Groovy DSL)·Java 21·Spring Boot 4.0.x(Jackson 3)·프로필 `dev`·`prod`, 패키지 `com.freshlink.<레포>`, README에 적힌 의존성만.
 - 설계에 레이어별로 담는다:
   - **API 계약:** 서비스 안 경로(gateway가 `/api`를 떼고 넘긴다: `/api/owner/inventory/**` → `/owner/inventory/**`), 메서드, 요청/응답 DTO 필드·타입, 상태 코드(400/403/404/409), 필요한 헤더(`X-User-Id`, `X-User-Role`, `X-Store-Id`). 점주 API는 점포 ID를 경로로 받지 않고 `X-Store-Id`를 쓴다
   - **소유권 확인:** 어느 서비스가 무엇을 헤더와 DB로 비교하는지 (예: lot의 store_id = `X-Store-Id`, 주문의 customer_id = `X-User-Id`). 사용자 ID는 Cognito `sub` UUID 문자열(`VARCHAR(36)`)

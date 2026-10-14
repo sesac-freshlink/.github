@@ -41,7 +41,7 @@
 | 영역 | 기술 |
 | --- | --- |
 | 프론트엔드 | React · S3 + CloudFront(OAC) · ACM |
-| 백엔드 | Java 21 · Spring Boot · Spring Data JPA · Spring Security(OAuth2 Resource Server) · Spring Cloud Gateway · Spring Cloud AWS |
+| 백엔드 | Java 21 · Spring Boot 4.0 · Spring Data JPA · Spring Security(OAuth2 Resource Server) · Spring Cloud Gateway · Spring Cloud AWS |
 | 인증 | Amazon Cognito User Pool (그룹 OWNER·CUSTOMER) · Amplify Auth · RS256 JWT를 JWKS로 검증 |
 | 데이터 | Amazon RDS MySQL (인스턴스 1대, 서비스별 스키마 분리) |
 | 메시징 | Amazon SQS (FIFO 1 + 표준 1 + DLQ 2) · Outbox · 멱등 처리 · Saga |
