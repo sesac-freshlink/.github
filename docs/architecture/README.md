@@ -51,7 +51,7 @@ order-service가 토스페이먼츠 결제 승인 API를 호출한다. 프라이
 ## 6. 켜고 끄기 (⑭)
 
 - **EventBridge Scheduler(⑭):** 평일 아침 RDS 시작·노드 그룹 2대, 저녁 노드 0대·RDS 중지, 매일 23:00 안전 끄기. Lambda 없이 AWS API를 직접 부르고 시간대는 `Asia/Seoul`.
-- **GitHub Actions:** Terraform이 필요한 NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성(노드 2대 포함). 일정표는 기획안 6-5.
+- **GitHub Actions:** Terraform이 필요한 NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성(노드 2대 포함). 일정표는 [aws-리소스-계획.md](../aws-리소스-계획.md) 6-5.
 
 ## 7. 가입·로그인 (⑮)
 
