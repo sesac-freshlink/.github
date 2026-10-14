@@ -22,7 +22,7 @@ model: sonnet
   - 스케줄러는 ShedLock(`@SchedulerLock`)을 단다
   - 실시간 재고는 프론트가 3초마다 부르는 조회 API(`GET /owner/inventory`)로 제공한다
   - 주문 저장소가 설계에서 "미확정"이면 그 부분을 임의로 MySQL/DynamoDB로 확정하지 말고 요약에 "차단"으로 적는다
-  - 관측성: `spring-boot-starter-actuator`, `micrometer-registry-prometheus`, Micrometer Tracing(Brave) + Zipkin 리포터. Actuator는 앱 포트에 둔다(`management.server.port` 쓰지 않음). `health`(liveness/readiness 그룹), `prometheus`를 연다. 쿠버네티스는 모든 컨테이너 8080, 로컬은 `application.yml`의 서비스별 포트(8080~8084). 로그는 JSON에 traceId 포함
+  - 관측성: `spring-boot-starter-actuator`, `micrometer-registry-prometheus`, Micrometer Tracing(Brave) + Zipkin 리포터. Actuator는 앱 포트에 둔다(`management.server.port` 쓰지 않음). `health`(liveness/readiness 그룹), `prometheus`를 연다. 모든 서비스가 8080(dev·prod 같음). 다른 서비스는 쿠버네티스 Service 이름으로 부른다(`http://<레포>:8080`). 로그는 JSON에 traceId 포함
   - 비밀값(DB 비밀번호, 토스 키, AWS 키)은 `${ENV}`로만. 기본값에 실값을 넣지 않는다
   - 주석·Swagger 설명은 평이한 한국어 한 줄, 기능 ID 포함 (예: `// S-32 폐기: lot 수량 감소 + 원장 기록`)
 - 테스트를 같이 쓴다 (설계의 테스트 계획 기준): JUnit 5, AssertJ, `@WebMvcTest`(헤더·403·400), `@DataJpaTest`, 쪽지 멱등(같은 messageId 두 번), 경계값(유통기한 당일·경과). 외부(SQS·토스·Cognito)는 목으로 막는다. 무의미한 커버리지용 테스트는 쓰지 않는다.

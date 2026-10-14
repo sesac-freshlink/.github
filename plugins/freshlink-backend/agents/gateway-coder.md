@@ -13,7 +13,7 @@ model: sonnet
 - 먼저 읽는다: 설계 문서, gateway `CLAUDE.md`·`README.md`(라우팅 표, JWT 규칙), `build.gradle`, `application.yml`, `config/`·`filter/`·`security/`의 기존 코드.
 - 기술: Java 21, Spring Boot 3, Spring Cloud Gateway(WebFlux, 리액티브), Spring Security OAuth2 Resource Server. Servlet API(`HttpServletRequest`, `OncePerRequestFilter`)를 쓰지 않는다.
 - 규칙:
-  - 라우팅은 README 표가 기준. `/api` 접두사를 떼고(`StripPrefix=1`) 서비스로 넘긴다. 서비스 주소는 환경 변수(쿠버네티스 Service 이름 `http://<레포>:<포트>`)로 받는다
+  - 라우팅은 README 표가 기준. `/api` 접두사를 떼고(`StripPrefix=1`) 서비스로 넘긴다. 서비스 주소는 환경 변수로 받고 기본값은 쿠버네티스 Service 이름(`http://<레포>:8080`)이다
   - 토큰 검증: `issuer-uri: ${COGNITO_ISSUER_URI}`로 JWKS를 받아 RS256 서명·`exp`·`iss`를 확인하고, 추가로 `token_use = id`와 `aud` = `${COGNITO_CLIENT_ID}`를 검사하는 validator를 단다. 공유 비밀 키(HS256)를 쓰지 않는다
   - 공개 경로: 점포 검색(`GET /api/stores`), 점포 상품 목록(`GET /api/stores/{id}/products`). 회원가입·로그인 API는 없다 (프론트가 Cognito와 직접)
   - `/api/owner/**`는 `cognito:groups`에 `OWNER`가 있어야 한다. 없으면 403, 토큰 문제는 401
