@@ -1,6 +1,6 @@
 # Claude Code 팀 플러그인 사용법
 
-이 레포는 팀 공용 Claude Code 플러그인을 배포하는 마켓플레이스다. 에이전트·플러그인·마켓플레이스가 무엇인지는 [README의 "Claude Code 에이전트 쉽게 이해하기"](../README.md#claude-code-에이전트-쉽게-이해하기)에 비유로 정리해 두었다.
+이 레포는 팀 공용 Claude Code 플러그인을 배포하는 마켓플레이스다. 전체 흐름 그림과 PM·에이전트·플러그인이 무엇인지는 [README의 "Claude Code PM 파이프라인"](../README.md#claude-code-pm-파이프라인)에 정리해 두었다.
 
 | 플러그인 | 담당 | 쓰는 레포 | 시작 명령 |
 | --- | --- | --- | --- |
