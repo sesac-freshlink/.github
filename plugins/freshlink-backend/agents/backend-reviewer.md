@@ -26,9 +26,8 @@ model: opus
    - 쪽지 형식 변경인데 common 버전·`message-spec` 라벨·담당자 알림 언급 없음
    - 사용자 ID 칸이 `VARCHAR(36)` 아님, 다른 서비스 표 직접 조회, 유니크 제약 누락(`shipment_id` 등)
    - 주문 저장소를 MySQL·DynamoDB 중 하나로 확정한 코드(아직 미정 — 사용자 결정 근거가 없으면 지적)
-   - MVP에 SSE·WebSocket·Redis 추가(실시간 재고는 3초 폴링)
 4. **운영**
-   - `@Scheduled`에 ShedLock 없음(파드 2개), Actuator health/prometheus·tracing 누락, 관리 포트 8081 아님, 로그에 traceId 없음
+   - `@Scheduled`에 ShedLock 없음(파드 2개), Actuator health/prometheus·tracing 누락, `management.server.port`로 관리 포트를 따로 둠(앱 포트에 둔다), gateway에 `/actuator` 라우트가 있거나 외부 `/actuator` 요청을 막지 않음, 로그에 traceId 없음
    - 환경 변수 이름이 gitops values·`application.yml`과 다름, 새 환경 변수인데 요약에 "gitops에 필요한 값" 없음
    - N+1 쿼리, 트랜잭션 범위 과다, 외부 호출(토스) 타임아웃 없음
 5. **설계 이탈** — `_workspace/02_architect_design.md`와 다름
