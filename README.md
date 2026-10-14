@@ -13,7 +13,7 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`docs/프로젝트-보드-사용법.md`](docs/프로젝트-보드-사용법.md) | 프로젝트 보드·이슈·브랜치·커밋 연동 사용법 |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | 브랜치·커밋·PR·라벨 규칙 |
 | [`.claude-plugin/`](.claude-plugin), [`plugins/`](plugins) | 팀 공용 Claude Code 플러그인(에이전트 묶음). 아래 "Claude Code 에이전트 쉽게 이해하기" 참고 |
-| [`docs/ai-agents.md`](docs/ai-agents.md) | 플러그인 설치·사용·수정 방법 |
+| [`docs/ai-agents.md`](docs/ai-agents.md) | 플러그인(`freshlink-infra`, `freshlink-backend`) 설치·사용·수정 방법, 에이전트별 부탁하는 예 |
 
 앞으로 추가할 것: 재사용 워크플로 `workflows/spring-build.yml`, `workflows/frontend-deploy.yml` (각 서비스 레포가 몇 줄로 불러 쓴다).
 
@@ -34,7 +34,7 @@ frontend 레포의 `.claude/agents/`(pm, architect, coder, reviewer 등 8개)가
 
 Claude는 지금 열린 레포의 `.claude/agents/`만 읽는다. frontend에 넣은 설명서는 frontend를 열었을 때만 보이고, `infra`를 열면 보이지 않는다. 이 `.github` 레포에 `.claude/agents/`를 넣어도 마찬가지로 다른 레포에서는 보이지 않는다.
 
-인프라 작업처럼 `infra`, `gitops`, `.github` 여러 레포를 오가는 일은 설명서를 레포마다 복사해야 하는 문제가 생긴다.
+인프라 작업(`infra`, `gitops`, `.github`)이나 백엔드 작업(서비스 레포 6개)처럼 여러 레포를 오가는 일은 설명서를 레포마다 복사해야 하는 문제가 생긴다.
 
 ### 플러그인 = 설명서를 묶은 "앱"
 
@@ -50,21 +50,36 @@ Claude는 지금 열린 레포의 `.claude/agents/`만 읽는다. frontend에 �
 | 앱 | 플러그인 | `plugins/<플러그인>/` |
 | 앱스토어 | 마켓플레이스 | `.claude-plugin/marketplace.json` |
 
+### 어디서 쓰나
+
+에이전트는 **내 PC의 로컬 Claude Code 세션**에서 쓴다. Claude 데스크톱 앱에서 새 생성 → 환경 **로컬** → 레포 폴더(예: `C:\fresh-link\repos\inventory-service`)를 고르거나, 터미널에서 그 폴더로 가서 `claude`를 실행한다.
+
+claude.ai 프로젝트 채팅·스레드에서는 `/plugin`과 에이전트가 동작하지 않는다. 프로젝트는 계획을 세우고 PR을 만들어 달라고 하는 곳이다.
+
 ### 설치 (한 번만)
 
-Claude Code 입력창에 차례로 입력한다.
+일반 터미널(cmd, PowerShell)에서 실행한다. 필요한 플러그인만 깔아도 된다.
 
-```
-/plugin marketplace add sesac-freshlink/.github
-/plugin install freshlink-infra@freshlink
+```bash
+claude plugin marketplace add sesac-freshlink/.github
+claude plugin install freshlink-backend@freshlink
+claude plugin install freshlink-infra@freshlink
 ```
 
-이후 어느 레포에서든 "에이전트로 이 작업 해줘"라고 하면 된다. 설명서를 고치려면 이 레포에 PR을 올려 합친 뒤 `/plugin marketplace update freshlink`를 한 번 실행한다.
+`claude plugin list`로 설치를 확인하고, 새 세션에서 `/agents`를 입력하거나 "쓸 수 있는 에이전트 목록 알려줘"라고 물어 에이전트가 보이는지 본다.
+
+그다음 에이전트 이름을 넣어 부탁하면 된다.
+
+- "backend-pm으로 재고 차감 API 계획 세워줘"
+- "infra-reviewer 에이전트로 이 PR 리뷰해줘"
+
+설명서가 바뀌면(이 레포에 PR이 합쳐지면) `claude plugin marketplace update freshlink`를 한 번 실행하고 새 세션을 연다.
 
 ### 지금 있는 플러그인
 
 | 플러그인 | 담당 | 내용 |
 | --- | --- | --- |
 | `freshlink-infra` | 김진아 | 인프라 작업(Terraform, Helm·ArgoCD, GitHub Actions) 에이전트 7개 + 파이프라인 + 명령 3개 |
+| `freshlink-backend` | 김진아 | 백엔드 작업(gateway, member·inventory·order-service, logistics-simulator, common) 에이전트 7개 + 파이프라인 + 명령 3개 |
 
-자세한 사용법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
+에이전트마다 하는 일과 부탁하는 예, 업데이트·삭제 방법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
