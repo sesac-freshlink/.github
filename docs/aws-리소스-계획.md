@@ -29,7 +29,7 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | --- | --- | --- | --- | --- |
 | 컴퓨팅 | EKS 클러스터 (컨트롤 플레인) | 관리형 | 1 | 쿠버네티스 마스터. AWS가 운영 |
 | 컴퓨팅 | EKS 관리형 노드 그룹 | **t3.large** (2 vCPU, 8 GiB) | **2** (최소 2, 최대 3) | 모든 앱·시스템 파드 실행 |
-| DB | RDS MySQL 8.0 | **db.t4g.small** (2 vCPU, 2 GiB), gp3 20 GiB, 단일 AZ | **1** | member·inventory·order 스키마 3개 |
+| DB | RDS MySQL 8.4 | **db.t4g.small** (2 vCPU, 2 GiB), gp3 20 GiB, 단일 AZ | **1** | member·inventory·order 스키마 3개 |
 | DB 접속 | EC2 (SSM 접속용) | **t4g.nano**, SSM 에이전트만, 인바운드 없음 | 1 | SSM Session Manager 포트 포워딩으로 RDS에 접속하는 통로. RDS와 같이 켜고 끈다 |
 | 메시징 | SQS | 공용 세트 FIFO 1 + 표준 1 + DLQ 2. dev는 개발자별 세트를 더 둔다 | 4 (+ dev 개발자별) | 서비스 간 쪽지. 큐 이름에 환경 접두사(`dev-`, `prod-`)를 붙인다 |
 | 네트워크 | VPC | dev `10.0.0.0/16`, prod `10.1.0.0/16` | 1 | 환경마다 따로. 5장 참고 |
@@ -172,7 +172,9 @@ AZ마다 **퍼블릭, 앱 프라이빗, DB 프라이빗** 3개씩, 총 6개를 �
 
 위 표는 dev(`10.0.0.0/16`) 기준이다. prod는 같은 배치를 `10.1.0.0/16`에 그대로 쓴다(예: public-a `10.1.0.0/24`, app-a `10.1.16.0/20`, db-a `10.1.48.0/24`). 두 VPC의 대역이 겹치지 않으므로 나중에 피어링이 필요해도 막히지 않는다. 남는 대역(`x.x.64.0` 이후)은 나중에 서브넷을 추가할 때 쓴다.
 
-SSM 접속용 t4g.nano는 app-a 서브넷에 둔다. SSM 에이전트가 AWS로 나가는 길은 NAT를 쓰므로, 켜는 시간을 NAT·RDS와 맞춘다(6-5).
+SSM 접속용 t4g.nano는 **public-a 서브넷에 공인 IP를 붙여** 둔다. NAT는 클러스터 묶음에 있어 밤·주말·클러스터를 만들기 전에는 없으므로, app 서브넷에 두면 SSM 에이전트가 AWS에 닿지 못한다. 보안 그룹 인바운드가 하나도 없어 밖에서 들어올 길은 없고, 공인 IPv4 요금(시간당 0.005 USD)은 켜져 있는 동안만 붙는다. 켜고 끄는 시간은 RDS와 같다(6-5). (2026-10-15 변경: app-a → public-a)
+
+RDS는 **MySQL 8.4(LTS)** 를 쓴다. RDS MySQL 8.0은 2026-07-31에 표준 지원이 끝나 그 뒤로는 Extended Support 요금(vCPU 시간당 과금)이 붙는다. 백엔드 테스트(Testcontainers)도 8.4를 쓴다.
 
 **앱 서브넷을 /20으로 크게 잡은 이유**: EKS 기본 네트워크(VPC CNI)는 **파드마다 VPC의 실제 IP를 하나씩** 준다. 게다가 노드는 파드가 빨리 뜨도록 IP를 미리 여러 개 확보해 둔다. 그래서 노드 몇 대만으로도 IP를 수십 개씩 쓴다. /24(251개)로 잡으면 노드를 늘리거나 2순위 기능을 붙일 때 IP가 바닥날 수 있다. 서브넷 크기는 비용과 상관없으니 넉넉히 잡는다.
 
@@ -207,8 +209,8 @@ flowchart TB
     CF --> ALB
     subgraph VPC["VPC (dev 10.0.0.0/16 · prod 10.1.0.0/16)"]
         subgraph AZA["ap-northeast-2a"]
-            PA["public-a<br/>ALB · NAT GW"]
-            AA["app-a<br/>노드 1 (t3.large)<br/>SSM 접속용 t4g.nano"]
+            PA["public-a<br/>ALB · NAT GW<br/>SSM 접속용 t4g.nano"]
+            AA["app-a<br/>노드 1 (t3.large)"]
             DA["db-a<br/>RDS"]
         end
         subgraph AZC["ap-northeast-2c"]
@@ -222,7 +224,8 @@ flowchart TB
     AA & AC --> DA
     AA & AC -- "외부 통신" --> NAT["NAT GW (public-a)"]
     NAT --> Ext["ECR · SQS · Cognito · SSM · 토스 API"]
-    Dev["팀원 (AWS CLI)"] -. "SSM 포트 포워딩" .-> AA
+    Dev["팀원 (AWS CLI)"] -. "SSM 포트 포워딩" .-> PA
+    PA -. "3306 (nano)" .-> DA
 ```
 
 - 인터넷에서 직접 들어올 수 있는 건 ALB뿐이고, ALB도 CloudFront를 거친 요청만 받는다.
@@ -306,9 +309,9 @@ RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 �
 
 | 시각 (한국) | 작업 | 방식 |
 | --- | --- | --- |
-| 월 08:40 | 클러스터 묶음 생성(노드 2대 포함) + RDS·nano 시작 | GitHub Actions (생성에 15~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
+| 월 08:40 | 클러스터 묶음 생성(노드 2대 포함) | GitHub Actions (생성에 15~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
 | 화~금 09:00 | NAT 생성 | GitHub Actions |
-| 화~금 09:00 | RDS·nano 시작 | EventBridge Scheduler |
+| 월~금 09:00 | RDS·nano 시작 | EventBridge Scheduler |
 | 화~금 09:10 | 노드 그룹 desired 2 | EventBridge Scheduler (NAT가 생긴 뒤라 이미지를 받을 수 있다) |
 | 월~목 21:00 | 노드 그룹 desired 0 | EventBridge Scheduler |
 | 월~금 21:00 | RDS·nano 중지 | EventBridge Scheduler |
