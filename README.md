@@ -11,6 +11,7 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`docs/aws-리소스-계획.md`](docs/aws-리소스-계획.md) | AWS 리소스 계획(dev·prod 환경, 노드·RDS 산정, 네트워크, 비용, 켜고 끄는 일정, Terraform 모듈) |
 | [`docs/기술스택과 선택이유.md`](docs/%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC%20%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) | 도구별 선택 이유 (관측성 3-5, 켜고 끄기 3-6, Cognito 3-7 등) |
 | [`docs/백엔드-공통작업-인수인계.md`](docs/백엔드-공통작업-인수인계.md) | 백엔드 공통 기준(Java 21·Spring Boot 4.0·프로필·포트 8080), 서비스 레포 Spring 뼈대, common v0.1.0 작업 안내 |
+| [`docs/백엔드-공통-규칙.md`](docs/백엔드-공통-규칙.md) | 뼈대 작업 결과와 규칙: 버전, gateway WebMVC, Flyway, 로컬 실행, 환경 변수, 오류 처리, 서비스 간 통신(명령은 큐·조회는 동기), common 가져다 쓰기 |
 | [`docs/jina/할일-목록.md`](docs/jina/할일-목록.md) | 김진아 할 일 목록 |
 | [`docs/주문-결제-흐름과-재고-예약.md`](docs/주문-결제-흐름과-재고-예약.md) | 고객이 보는 주문·결제 흐름과 백엔드 재고 예약(RESERVE·CONFIRM·RELEASE)의 구분, 주문 상태별 고객 화면 문구 |
 | [`docs/git-계획.md`](docs/git-계획.md) | Organization·레포 구성, 브랜치·태그·CI/CD·시크릿 규칙 |
