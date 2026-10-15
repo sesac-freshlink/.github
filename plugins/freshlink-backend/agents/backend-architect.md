@@ -17,7 +17,7 @@ model: opus
   - **소유권 확인:** 어느 서비스가 무엇을 헤더와 DB로 비교하는지 (예: lot의 store_id = `X-Store-Id`, 주문의 customer_id = `X-User-Id`). 사용자 ID는 Cognito `sub` UUID 문자열(`VARCHAR(36)`)
   - **데이터:** 엔티티·테이블·인덱스·유니크 제약, 스키마 변경 방법. 다른 서비스 표를 직접 읽지 않는다
   - **쪽지:** 큐(`inventory-commands.fifo` 그룹 = storeId, 중복 제거 = messageId / `inventory-results`), type, 필드, 보내는 쪽·받는 쪽, 같은 트랜잭션 안 outbox 저장, `processed_message` 멱등, 실패·재시도·DLQ. DTO는 common에 둔다. 형식이 바뀌면 common 버전 올림과 `message-spec` 라벨
-  - **Saga(order):** 상태 전이(`RESERVING`→`PAYMENT_WAITING`→`PAID`, 실패 `OUT_OF_STOCK`/`PAYMENT_FAILED`/`EXPIRED`)와 보상(RELEASE)
+  - **Saga(order):** 상태 전이(`RESERVING`→`PAYMENT_WAITING`→`PAID`, 실패 `OUT_OF_STOCK`/`PAYMENT_FAILED`/`EXPIRED`)와 보상(RELEASE). 예약은 내부 단계라 고객용 API·문구에 쓰지 않는다(`.github` 레포 `docs/주문-결제-흐름과-재고-예약.md`)
   - **스케줄러:** 파드 2개 → ShedLock. 주기와 잠금 시간
   - **gateway:** 라우트, 공개 경로, `/api/owner/**`의 OWNER 그룹 확인, 위조 헤더 제거 후 주입
   - **관측성:** Actuator(health liveness/readiness, prometheus), Micrometer Tracing → Zipkin, JSON 로그에 traceId. Actuator는 앱 포트에 둔다(관리 포트 없음, 모든 서비스 8080, dev·prod 같음). gateway는 `/actuator` 라우트 없음 + 외부 `/actuator` 차단, ALB·CloudFront는 `/api/*`만 새 비즈니스 지표가 있으면 이름(`freshlink_...`)과 태그
