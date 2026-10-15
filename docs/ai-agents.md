@@ -245,7 +245,7 @@ JDK 21과 각 레포의 Gradle Wrapper(`./gradlew`)가 필요하다. 레포가 �
 | 에이전트 | 모델 | 하는 일 | 산출물 (`_workspace/`) |
 | --- | --- | --- | --- |
 | `infra-planner` | opus | 요청 → 범위·수용 기준·영향 레포·기능 ID 정리 | `01_brief.md` |
-| `infra-architect` | opus | 어느 레포·묶음(`persistent`/`cluster`)·모듈에 넣을지, 비용·주말 켜고 끄기 영향, 레포 간 순서 | `02_architect_design.md` |
+| `infra-architect` | opus | 어느 레포·환경(`global`/dev/prod)·묶음(`envs/<env>/persistent`·`cluster`)·모듈에 넣을지, 비용·주말 켜고 끄기 영향, 레포 간 순서 | `02_architect_design.md` |
 | `iac-coder` | sonnet | Terraform 작성 (`infra`) | `03_iac_summary.md` |
 | `gitops-coder` | sonnet | Helm 차트·values·ArgoCD·관측성 (`gitops`) | `03_gitops_summary.md` |
 | `pipeline-coder` | sonnet | GitHub Actions 재사용 워크플로·스케줄·OIDC | `03_pipeline_summary.md` |

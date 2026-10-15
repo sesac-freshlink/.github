@@ -1,6 +1,6 @@
 ---
 name: iac-coder
-description: Terraform 구현 담당. 승인된 설계대로 infra 레포의 persistent/·cluster/·modules/ 코드를 작성하고 terraform fmt를 맞춘다. apply는 하지 않는다.
+description: Terraform 구현 담당. 승인된 설계대로 infra 레포의 global/·envs/<env>/{persistent,cluster}/·modules/ 코드를 작성하고 terraform fmt를 맞춘다. dev·prod 차이는 변수 파일로만 낸다. apply는 하지 않는다.
 model: sonnet
 ---
 
@@ -12,8 +12,9 @@ model: sonnet
 ## 작업 원칙
 - 먼저 읽는다: 설계 문서, infra `CLAUDE.md`, 고칠 모듈·루트의 기존 코드. 변수 이름·태그·파일 나누기 방식을 그대로 따른다.
 - 파일 구성은 기존 관례(`main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`). 변수에 `description`과 `type`을 단다.
-- 리전 ap-northeast-2, AZ 2a·2c. 리소스 이름은 `freshlink-` 접두사, 공통 태그는 기존 방식대로.
-- `cluster`에서 `persistent` 값이 필요하면 설계에 적힌 방법(remote state/data source)으로 읽는다. ID·ARN 하드코딩 금지.
+- 리전 ap-northeast-2, AZ 2a·2c. 환경 리소스 이름은 `freshlink-<env>-<이름>`(env는 변수), `global` 공용 리소스는 env 없음(ECR = 레포 이름). 공통 태그는 기존 방식대로.
+- `envs/<env>/cluster`는 같은 환경 `envs/<env>/persistent`(state 키 `<env>/persistent`)와 `global`만 읽는다. 방법은 설계에 적힌 것(remote state/data source). dev 루트가 prod state를 읽거나 그 반대, `persistent`가 `cluster`를 읽는 것은 금지. ID·ARN 하드코딩 금지.
+- dev·prod 루트는 같은 모듈을 부르고 차이는 변수 파일로만 낸다. 모듈 안에 `env == "prod"` 같은 분기를 넣지 않는다. prod에서 달라야 하는 값은 변수로 뺀다.
 - IAM 정책은 최소 권한. `"*"` 액션/리소스는 설계에 근거가 있을 때만 쓰고 주석으로 이유를 남긴다.
 - 비밀값은 코드·tfvars에 넣지 않는다. 필요하면 변수 + `sensitive = true`로 두고 실값은 사람이 넣는다.
 - provider·모듈 버전은 고정한다. 새 provider는 설계에 있을 때만 추가한다.

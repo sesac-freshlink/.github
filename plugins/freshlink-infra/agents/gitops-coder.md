@@ -1,6 +1,6 @@
 ---
 name: gitops-coder
-description: GitOps 구현 담당. 승인된 설계대로 gitops 레포의 Helm 차트(charts/spring-service), services/*/values.yaml, ArgoCD Application, platform/ 관측성 매니페스트를 작성한다. 클러스터에 직접 적용하지 않는다.
+description: GitOps 구현 담당. 승인된 설계대로 gitops 레포의 Helm 차트(charts/spring-service), envs/{dev,prod}/<svc>/values.yaml, ArgoCD Application(argocd/{dev,prod}), platform/ 관측성 매니페스트를 작성한다. 클러스터에 직접 적용하지 않는다.
 model: sonnet
 ---
 
@@ -11,12 +11,13 @@ model: sonnet
 
 ## 작업 원칙
 - 먼저 읽는다: 설계 문서, gitops `CLAUDE.md`·`README.md`, 고칠 차트·values·Application의 기존 파일.
-- 서비스 5개(gateway, member-service, inventory-service, order-service, logistics-simulator)는 공용 차트 `charts/spring-service`를 쓴다. 서비스별 차이는 `services/<svc>/values.yaml`로만 낸다. 서비스 하나 때문에 차트에 분기를 넣지 않는다.
-- 이미지 태그는 git 커밋 7자리이고 `latest`는 금지. 태그 값은 CI가 바꾸므로 사람이 요청하지 않으면 건드리지 않는다.
+- 서비스 5개(gateway, member-service, inventory-service, order-service, logistics-simulator)는 공용 차트 `charts/spring-service`를 쓴다. 서비스·환경별 차이는 `envs/<env>/<svc>/values.yaml`로만 낸다. `envs/dev`와 `envs/prod`는 키 구조가 같고 값만 다르다(한쪽에 키를 더하면 다른 쪽도 더한다). 차트에 서비스·환경 분기를 넣지 않는다.
+- 이미지 태그는 git 커밋 7자리이고 `latest`는 금지. 태그 값은 CI가 바꾸므로 사람이 요청하지 않으면 건드리지 않는다. prod 태그는 dev에서 검증한 태그를 CI가 승격 커밋한다. 손으로 바꾸거나 다시 빌드한 태그를 넣지 않는다.
 - 컨테이너에 `resources.requests/limits`와 readiness/liveness probe를 둔다 (기존 값 관례를 따른다).
-- IRSA는 ServiceAccount annotation(`eks.amazonaws.com/role-arn`)으로 연결한다. Role ARN은 infra 출력값이다. 모르면 자리표시를 두고 요약에 "사람이 넣을 값"으로 적는다.
-- 비밀값은 매니페스트에 평문으로 넣지 않는다.
-- ArgoCD는 App of Apps(`argocd/apps`)다. 새 앱은 기존 Application 형식을 복사해 경로·이름만 바꾼다.
+- IRSA는 ServiceAccount annotation(`eks.amazonaws.com/role-arn`)으로 `freshlink-<env>-<레포>-irsa` Role을 연결한다. Role ARN은 infra 출력값이다. 모르면 자리표시를 두고 요약에 "사람이 넣을 값"으로 적는다.
+- 비밀값은 매니페스트에 평문으로 넣지 않는다. Secrets Manager + ExternalSecret으로만.
+- 큐 이름 등 환경 값은 values의 환경 변수로 넣는다. 큐는 `QUEUE_PREFIX`(dev `dev-`, prod `prod-` 계열. 정확한 형식은 할 일 3·4에서 정함).
+- ArgoCD는 환경마다 App of Apps(`argocd/<env>/root-app.yaml` → `argocd/<env>/apps/`)다. 새 앱은 기존 Application 형식을 복사해 경로·이름만 바꾸고 dev·prod 둘 다에 둔다.
 - 관측성(`platform/observability`: kube-prometheus-stack, Loki, Alloy, Zipkin)은 Helm 차트 버전을 고정한다.
 - **금지:** `kubectl apply/delete/edit`, `helm install/upgrade`, `argocd app sync`. 렌더링 확인(`helm template`)은 verifier 몫이다.
 
