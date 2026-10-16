@@ -28,7 +28,7 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 | 신원 전달 | gateway가 위조 헤더를 지우고 `X-User-Id`(sub, UUID 문자열)·`X-User-Role`·`X-Store-Id`를 붙인다. 서비스는 토큰을 다시 검증하지 않는다. 소유권 확인은 서비스 몫 |
 | 재고 변경 | 전부 `inventory-commands.fifo`(그룹 = storeId) 경유. Outbox + `processed_message` 멱등 (common) |
 | 실시간 재고 | 점주 화면이 3초마다 `GET /owner/inventory` 조회 (폴링) |
-| 주문 저장소 | DynamoDB 도입 **검토 중, 미정**. 어느 쪽도 가정하지 않고 걸리면 사용자에게 묻는다 |
+| 주문 저장소 | **MySQL 확정**(10/15). 세 서비스 모두 RDS MySQL + Flyway. 주문과 outbox를 한 트랜잭션에 넣는다 |
 | 배포 | GitHub Actions(`.github` 재사용 워크플로) → ECR → gitops 이미지 태그 커밋 → ArgoCD → EKS. 백엔드 에이전트는 gitops·infra를 고치지 않는다 (`freshlink-infra` 몫) |
 | 관측성 | Actuator·Micrometer → Prometheus(앱 포트의 `/actuator/prometheus`, 관리 포트 없음. 모든 서비스 8080(dev·prod 같음), 서비스끼리는 `http://<레포>:8080`. gateway는 외부 `/actuator` 차단), Micrometer Tracing → Zipkin, JSON 로그(traceId) → Loki |
 

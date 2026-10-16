@@ -165,7 +165,7 @@ ok / 고칠 점 / 멈춰
 ### PM이 그래도 꼭 묻는 것
 
 - 확인 ①②③
-- 정해지지 않은 것 (예: 주문 저장소를 DynamoDB로 할지)
+- 정해지지 않은 것
 - 담당자가 다른 레포를 고쳐야 할 때
 - 쪽지(SQS 메시지) 형식이 바뀔 때
 - 인프라: `terraform plan` 실행(AWS 계정을 읽는다), 비용이 늘어나는 변경
@@ -214,7 +214,7 @@ planner → architect → ① → common-coder → service-coder(레포별) → 
 - 로그인은 Amazon Cognito. 프론트가 ID 토큰을 보내고 **gateway만** 토큰을 검증한다(JWKS, RS256, `aud`). 역할은 `cognito:groups`, 점포는 `custom:storeId`. gateway가 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘기고, 서비스는 토큰을 다시 검증하지 않는다.
 - 재고를 바꾸는 일은 전부 `inventory-commands.fifo` 쪽지로. Outbox와 멱등 처리는 common을 쓴다.
 - 실시간 재고는 점주 화면이 **3초마다** `GET /owner/inventory`를 조회하는 폴링이다.
-- 주문 저장소에 DynamoDB를 쓸지는 **아직 정하지 않았다.** 에이전트는 어느 쪽도 가정하지 않고, 걸리면 물어본다.
+- 세 서비스(member·order·inventory) 모두 RDS MySQL + Flyway다. 주문 저장소도 MySQL로 확정했다(10/15). 주문과 outbox를 한 트랜잭션에 넣어야 하기 때문이다.
 - 배포(GitHub Actions → ECR → gitops → ArgoCD)와 관측성 설정(gitops)은 `freshlink-infra` 몫이다. 백엔드 PM은 필요한 환경 변수·권한을 "freshlink-infra로 할 일"로 알려 준다.
 
 ### 절대 하지 않는 것
