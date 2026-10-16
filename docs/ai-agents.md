@@ -176,7 +176,7 @@ ok / 고칠 점 / 멈춰
 
 - 브랜치: `feat/<기능ID>-<설명>` (문서만이면 `docs/<설명>`)
 - PR 대상: 서비스 레포는 `dev`, `infra`·`.github`는 `main`. 레포 `CLAUDE.md`가 다르게 정하면 그것을 따른다
-- 내 레포를 PR 없이 바로 올리고 싶으면 확인 ③에 "dev에 바로 push해"라고 답한다. 남의 레포는 그래도 PR로만 올린다
+- 내 레포도 PR로만 올린다 (`main`·`dev` 직접 push 금지). PR을 연 뒤 CodeRabbit 지적이 없고 CI 빌드가 통과하면 사람이 직접 합친다
 - `gh`(GitHub CLI)가 없거나 로그인이 안 되어 있으면 push까지만 하고 PR 만드는 링크를 알려 준다
 
 ### 중간에 끊겼을 때
@@ -219,7 +219,7 @@ planner → architect → ① → common-coder → service-coder(레포별) → 
 
 ### 절대 하지 않는 것
 
-- 담당자가 다른 레포의 `main`·`dev`에 직접 push — 작업 브랜치 + PR로만
+- `main`·`dev`에 직접 push (자기 레포 포함) — 작업 브랜치 + PR로만
 - `git push --force`, `git reset --hard`, `git clean`, 브랜치 삭제
 - DB `DROP`·`TRUNCATE`·조건 없는 `DELETE`, 큐 purge
 - AWS 리소스(Cognito 포함) 생성·수정·삭제, common 태그 배포
@@ -298,7 +298,7 @@ PM 없이 한 가지 일만 시키고 싶을 때는 에이전트 이름을 넣�
 
 ## 7. 에이전트 고치기·추가하기
 
-1. 이 레포에서 `chore/<설명>` 브랜치를 딴다 (담당자는 `main`에 바로 push해도 된다).
+1. 이 레포에서 `chore/<설명>` 브랜치를 딴다 (`main`에 바로 push하지 않고 PR로 합친다).
 2. 고칠 곳을 고른다.
    - 단계 순서, 확인을 언제 묻는지, PM이 알아서 할 일 → `plugins/<플러그인>/skills/*-pipeline/SKILL.md`
    - 특정 에이전트가 반복하는 실수 → `plugins/<플러그인>/agents/<이름>.md`의 "작업 원칙"에 한 줄
