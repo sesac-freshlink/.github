@@ -105,4 +105,4 @@
 | 김진아 | 팀장 · 인프라(Terraform, EKS, CI/CD) · gateway · logistics-simulator · common |
 | 이태우 | inventory-service · 점주 재고 화면 |
 | 김경우 | member-service · order-service · 로그인·주문 화면 |
-| 문영훈 | 지원(10/14~10/16) · 서비스 4개 Spring 뼈대 · common v0.1.0·v0.1.1(쪽지 DTO 7종, 공통 오류 응답) · 오류 처리 · JSON 로그·Tracing |
+| 문영훈 | 지원(10/14~10/16) · 서비스 4개 Spring 뼈대 · common v0.1.0·v0.1.1(쪽지 DTO 7종, 공통 오류 응답) · 오류 처리 |
