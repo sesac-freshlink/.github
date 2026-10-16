@@ -72,7 +72,7 @@
 | [order-service](https://github.com/sesac-freshlink/order-service) | 주문·결제·Saga | 김경우 |
 | [logistics-simulator](https://github.com/sesac-freshlink/logistics-simulator) | 가상 물류센터, 입고 쪽지 발행 | 김진아 |
 | [frontend](https://github.com/sesac-freshlink/frontend) | React (점주 `/owner`, 고객 `/customer`) | 공통 |
-| [common](https://github.com/sesac-freshlink/common) | Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 · 문영훈 |
+| [common](https://github.com/sesac-freshlink/common) | Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 |
 | [infra](https://github.com/sesac-freshlink/infra) | Terraform (persistent / cluster) | 김진아 |
 | [gitops](https://github.com/sesac-freshlink/gitops) | Helm 차트, 서비스별 values, ArgoCD | 김진아 |
 
@@ -105,4 +105,4 @@
 | 김진아 | 팀장 · 인프라(Terraform, EKS, CI/CD) · gateway · logistics-simulator · common |
 | 이태우 | inventory-service · 점주 재고 화면 |
 | 김경우 | member-service · order-service · 로그인·주문 화면 |
-| 문영훈 | 백엔드 공통 · 서비스 4개(gateway, member, order, inventory) Spring 뼈대 · common v0.1.0(쪽지 DTO 7종, 공통 오류 응답) |
+| 문영훈 | 지원(10/14~10/16) · 서비스 4개 Spring 뼈대 · common v0.1.0·v0.1.1(쪽지 DTO 7종, 공통 오류 응답) · 오류 처리 · JSON 로그·Tracing |
