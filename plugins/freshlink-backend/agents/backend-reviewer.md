@@ -25,7 +25,7 @@ model: opus
    - README API 표·설계와 경로·필드·상태 코드가 다름, 프론트(`frontend` `api.ts`·MSW)에 알려야 할 응답 변경
    - 쪽지 형식 변경인데 common 버전·`message-spec` 라벨·담당자 알림 언급 없음
    - 사용자 ID 칸이 `VARCHAR(36)` 아님, 다른 서비스 표 직접 조회, 유니크 제약 누락(`shipment_id` 등)
-   - 주문 저장소를 MySQL·DynamoDB 중 하나로 확정한 코드(아직 미정 — 사용자 결정 근거가 없으면 지적)
+   - 주문 저장소에 MySQL 말고 다른 저장소(DynamoDB 등)를 들인 코드 (10/15 MySQL 확정)
 4. **운영**
    - `@Scheduled`에 ShedLock 없음(파드 2개), Actuator health/prometheus·tracing 누락, `management.server.port`로 관리 포트를 따로 둠(앱 포트에 둔다), gateway에 `/actuator` 라우트가 있거나 외부 `/actuator` 요청을 막지 않음, 로그에 traceId 없음
    - 환경 변수 이름이 gitops values·`application.yml`과 다름, 새 환경 변수인데 요약에 "gitops에 필요한 값" 없음

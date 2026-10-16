@@ -41,8 +41,8 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 이미지 | ECR | 리포지토리 | 5 (두 환경 공용) | gateway, member-service, inventory-service, order-service, logistics-simulator |
 | 보안 | IRSA (IAM Role) | 서비스별 | 4 | SQS 접근 권한 분리 (gateway 제외, 자기 환경 큐만). member-service Role에는 User Pool 속성 변경 권한만 추가 |
 | 보안 | Secrets Manager | 비밀 | 앱 DB 비밀번호 3 + 토스 테스트 키 1 | External Secrets Operator가 읽어 파드의 Kubernetes Secret으로 넣는다 |
-| 인증 | Amazon Cognito User Pool | 그룹 2(OWNER, CUSTOMER), 앱 클라이언트 1 (시크릿 없음) | 1 | 회원가입·로그인·JWT 발급 ([기술스택과 선택이유.md](기술스택과%20선택이유.md) 3-7) |
-| 인증 | Lambda (Cognito 트리거) | Python, 128 MB | 1 | 가입 확인 시 `clientMetadata.role`대로 그룹 배정 |
+| 인증 | Amazon Cognito User Pool | 그룹 3(OWNER, CUSTOMER, ADMIN), 앱 클라이언트 1 (시크릿 없음) | 1 | 회원가입·로그인·JWT 발급 ([기술스택과 선택이유.md](기술스택과%20선택이유.md) 3-7) |
+| 인증 | Lambda (Cognito 트리거) | Python, 128 MB | 1 | 가입 확인 시 CUSTOMER 그룹 배정 (일반 가입은 고객만) |
 | 운영 | EventBridge Scheduler | 일정 | 여러 개 | RDS·노드 그룹·SSM 접속용 인스턴스를 정해진 시각에 켜고 끈다 (6-5) |
 | 비용 | AWS Budgets | - | 1 (계정 전체) | 금액 초과 알림. 첫 리소스보다 먼저 만든다 |
 | 관측성 | S3 버킷 (Loki 로그 저장) | 수명 주기 14일 | 1 | 유지 묶음에 둬서 주말 클러스터 삭제 뒤에도 로그가 남는다 |
@@ -365,10 +365,10 @@ dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데,
 | `rds` | RDS MySQL, DB 서브넷 그룹(db-a, db-c), 보안 그룹 (노드·SSM 접속용 보안 그룹에서만 3306 허용), 앱 DB 비밀번호 3개(Secrets Manager), SSM 접속용 t4g.nano(인바운드 없는 보안 그룹, SSM 정책 Role) |
 | `scheduler` | EventBridge Scheduler 일정(RDS·nano 시작·중지, 노드 그룹 desired, 23:00 안전 끄기)과 실행 Role. RDS를 만드는 같은 변경에 넣는다 |
 | `messaging` | 환경 접두사가 붙은 SQS 큐 4개(FIFO, 표준, DLQ 2개)와 재시도 정책. 개발자별 큐 세트는 변수 목록(`developers`)으로 만들고 prod는 빈 목록 |
-| `frontend` | S3 버킷, CloudFront 배포, OAC, CloudFront Function, ACM 인증서(us-east-1) |
+| `frontend` | S3 버킷, CloudFront 배포, OAC, CloudFront Function, ACM 인증서(us-east-1). `/api/*` 동작은 캐싱 끔, 오리진 요청 정책으로 `Authorization`·`Idempotency-Key` 헤더와 쿼리를 ALB까지 넘긴다 (`Idempotency-Key`는 order 주문 생성 중복 방지용) |
 | `ecr` | 리포지토리 5개와 이미지 보관 개수 정책 (`global` 묶음, 두 환경 공용) |
 | `budget` | AWS Budgets 알림 (`global` 묶음, 알림 메일은 tfvars 변수로 두고 실값은 커밋하지 않는다) |
-| `cognito` | 환경마다 User Pool 1개(이메일 로그인), 그룹 OWNER·CUSTOMER, 사용자 속성 `custom:storeId`, 브라우저용 앱 클라이언트(시크릿 없음), 가입 확인 트리거 Lambda와 실행 Role (유지 묶음) |
+| `cognito` | 환경마다 User Pool 1개(이메일 로그인), 그룹 OWNER·CUSTOMER·ADMIN, 사용자 속성 `custom:storeId`, 브라우저용 앱 클라이언트(시크릿 없음), 가입 확인 트리거 Lambda와 실행 Role (유지 묶음) |
 | `observability` | Loki 로그용 S3 버킷과 14일 수명 주기 정책 (유지 묶음) |
 
 Helm으로 설치하는 것
