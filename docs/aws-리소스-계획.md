@@ -1,8 +1,21 @@
 # AWS 리소스 계획
 
-작성일: 2026-10-08 · 개정: 2026-10-17 (주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
+작성일: 2026-10-08 · 개정: 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
 MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
+
+---
+
+## 원칙: 누가 무엇을 바꾸나
+
+> **자원을 만들고 지우는 것, 설정을 바꾸는 것은 Terraform. Terraform이 신경 안 쓰는 상태(켜짐/꺼짐, 비워 둔 숫자 칸)만 EventBridge.**
+
+| 하는 일 | 맡는 것 | 예 |
+| --- | --- | --- |
+| 자원 생성·삭제, 설정 변경 | Terraform (사람이 직접, 또는 GitHub Actions가 대신 `terraform apply`) | 클러스터 생성·삭제, NAT 생성·삭제 |
+| Terraform 기록에 없는 상태 바꾸기 | EventBridge Scheduler | RDS·nano 중지·시작, 노드 그룹 desired 0·2 (`ignore_changes`로 비워 둔 칸) |
+
+이 원칙을 지키면 Terraform 기록(state)과 실제 AWS가 어긋나지 않는다. 일정은 6-5에 있다.
 
 ---
 
