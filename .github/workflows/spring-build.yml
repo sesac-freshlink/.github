@@ -1,0 +1,176 @@
+# 서비스 레포 5개가 같이 쓰는 재사용 워크플로 (할 일 8, I-02).
+# 서비스 레포의 .github/workflows/ci.yml이 부른다:
+#   uses: sesac-freshlink/.github/.github/workflows/spring-build.yml@main
+#
+# 하는 일
+#   모든 실행: Gradle 빌드·테스트
+#   dev 브랜치 push(또는 dev에서 수동 실행)일 때만 이어서:
+#     ECR 이미지 푸시(태그 = 커밋 7자리) → gitops envs/dev/<서비스>/values.yaml 태그 커밋 → dev ArgoCD가 배포
+#   main 머지 때의 prod 태그 승격은 할 일 15에서 더한다.
+#
+# AWS는 GitHub OIDC로 Role freshlink-ci-ecr-push를 맡는다(저장된 AWS 키 없음). 그 Role은 서비스 레포의 dev·main 브랜치만 믿는다.
+# gitops 커밋은 조직 비밀 GITOPS_DEPLOY_KEY(gitops 레포 쓰기 deploy key)로 한다.
+name: spring-build
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        description: "서비스 이름 = ECR 리포지토리 = gitops envs/<env>/<서비스>. 비우면 레포 이름"
+        type: string
+        default: ""
+      aws-role-arn:
+        description: "CI가 맡는 IAM Role (infra global 출력 ci_ecr_push_role_arn)"
+        type: string
+        default: "arn:aws:iam::929523582720:role/freshlink-ci-ecr-push"
+    secrets:
+      GITOPS_DEPLOY_KEY:
+        required: false
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read   # com.freshlink:common (GitHub Packages)
+      id-token: write  # AWS OIDC
+    steps:
+      - name: 서비스 이름과 배포 여부
+        id: meta
+        env:
+          INPUT_SERVICE: ${{ inputs.service }}
+          REPO: ${{ github.event.repository.name }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          service="${INPUT_SERVICE:-$REPO}"
+          deploy=false
+          if [ "$REF" = "refs/heads/dev" ] && { [ "$EVENT" = "push" ] || [ "$EVENT" = "workflow_dispatch" ]; }; then
+            deploy=true
+          fi
+          {
+            echo "service=${service}"
+            echo "tag=${SHA:0:7}"
+            echo "deploy=${deploy}"
+          } >> "$GITHUB_OUTPUT"
+          echo "### ${service} · ${SHA:0:7} · 배포 ${deploy}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: 빌드·테스트
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 테스트 결과 올리기
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/
+          if-no-files-found: ignore
+
+      # ------------------------------------------------------------------ 여기부터 dev 배포만
+      - name: 실행 jar 고르기
+        if: steps.meta.outputs.deploy == 'true'
+        run: |
+          mapfile -t jars < <(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-plain.jar')
+          if [ "${#jars[@]}" -ne 1 ]; then
+            echo "::error::실행 jar가 하나가 아니다: ${jars[*]}"
+            exit 1
+          fi
+          mkdir -p .image
+          cp "${jars[0]}" .image/app.jar
+
+      - name: 공통 Dockerfile 받기
+        if: steps.meta.outputs.deploy == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: sesac-freshlink/.github
+          ref: main
+          path: .freshlink-ci
+          sparse-checkout: ci
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.meta.outputs.deploy == 'true'
+        with:
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 로그인
+        if: steps.meta.outputs.deploy == 'true'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 이미지 빌드·푸시
+        if: steps.meta.outputs.deploy == 'true'
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          SERVICE: ${{ steps.meta.outputs.service }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          image="${REGISTRY}/${SERVICE}:${TAG}"
+          # ECR 태그는 덮어쓸 수 없다(IMMUTABLE). 같은 커밋을 다시 돌리면 푸시를 건너뛴다
+          if aws ecr describe-images --repository-name "$SERVICE" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "이미 있다: ${image}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker build --platform linux/amd64 -f .freshlink-ci/ci/spring-service.Dockerfile -t "$image" .image
+          docker push "$image"
+          echo "푸시: ${image}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: gitops 받기
+        if: steps.meta.outputs.deploy == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: sesac-freshlink/gitops
+          ref: main
+          path: .gitops
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
+
+      - name: gitops dev 태그 커밋
+        if: steps.meta.outputs.deploy == 'true'
+        working-directory: .gitops
+        env:
+          SERVICE: ${{ steps.meta.outputs.service }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          file="envs/dev/${SERVICE}/values.yaml"
+          [ -f "$file" ] || { echo "::error::${file}이 gitops에 없다"; exit 1; }
+          git config user.name "freshlink-ci"
+          git config user.email "freshlink-ci@users.noreply.github.com"
+          # 서비스 여러 개가 동시에 커밋할 수 있다. 밀리면 받아서 다시 바꾸고 다시 push한다
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            # yq -i는 빈 줄을 지워 diff가 커지므로 sed로 그 줄만 바꾸고 yq로 확인한다
+            sed -i -E "s/^(  tag: )\"[^\"]*\"/\1\"${TAG}\"/" "$file"
+            [ "$(yq '.image.tag' "$file")" = "$TAG" ] || { echo "::error::${file}의 image.tag를 바꾸지 못했다"; exit 1; }
+            if git diff --quiet; then
+              echo "이미 ${TAG}다" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            git commit -am "chore(${SERVICE}): image ${TAG}"
+            if git push origin HEAD:main; then
+              echo "gitops 커밋: ${file} → ${TAG}" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep $((i * 3))
+          done
+          echo "::error::gitops push가 계속 실패했다"
+          exit 1
