@@ -60,14 +60,14 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "### ${service} · ${SHA:0:7} · 배포 ${deploy}" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: 빌드·테스트
         run: |
@@ -99,14 +99,14 @@ jobs:
 
       - name: 공통 Dockerfile 받기
         if: steps.meta.outputs.deploy == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: sesac-freshlink/.github
           ref: main
           path: .freshlink-ci
           sparse-checkout: ci
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         if: steps.meta.outputs.deploy == 'true'
         with:
           role-to-assume: ${{ inputs.aws-role-arn }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: gitops 받기
         if: steps.meta.outputs.deploy == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: sesac-freshlink/gitops
           ref: main
