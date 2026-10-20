@@ -400,6 +400,7 @@ dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데,
 | Actuator 노출 | Actuator는 앱 포트에 둔다(관리 포트를 따로 두지 않는다). dev·prod 모두 모든 컨테이너가 8080 하나를 쓰고(차트가 `SERVER_PORT=8080`을 넣는다), probe는 `/actuator/health/liveness`·`readiness`, ServiceMonitor는 `/actuator/prometheus`를 8080에서 본다. 밖으로 나가지 않게 ALB Ingress·CloudFront는 `/api/*`만 gateway로 넘기고, gateway는 `/actuator` 라우트를 두지 않으며 외부 `/actuator` 요청을 Spring Security로 막는다(health만 열거나 클러스터 안 요청만) | 김진아 (Helm 템플릿) |
 | Loki 차트 기본값 | Loki Helm 차트는 기본으로 캐시(memcached)와 canary 파드를 크게 띄운다. 단일 바이너리 모드에서 `chunksCache`, `resultsCache`, `lokiCanary`, `gateway`를 끄지 않으면 메모리 수 GiB를 요청해서 노드 2대에 들어가지 않는다 | 김진아 |
 | 주말 삭제 전 볼륨 정리 | 클러스터를 지우기 전에 Prometheus 볼륨(PVC)을 먼저 지운다. EBS CSI 드라이버가 사라진 뒤에는 EBS 볼륨이 지워지지 않고 남아 요금이 나간다. 금요일 삭제 작업 첫 단계에 넣는다 | 김진아 |
+| GitHub 예약 실행 누락 | GitHub Actions 예약(schedule)은 몇 시간씩 늦거나 아예 빠질 수 있다. 2026-10-20(화) 09:00 NAT 생성 예약이 돌지 않아 dev 전체가 503이었다. 빠진 예약은 run도 로그도 오류도 남기지 않아 GitHub 화면·`gh`·API 어디에서도 원인을 볼 수 없다. 그래서 시각이 중요한 켜고 끄기는 GitHub 예약에 맡기지 않고 EventBridge Scheduler가 workflow_dispatch로 실행한다(6-5, infra `docs/troubleshooting/2026-10-20-nat-예약-빠짐-노드-안-붙음.md`) | 김진아 |
 
 ---
 
