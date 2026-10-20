@@ -1,6 +1,6 @@
 # AWS 리소스 계획
 
-작성일: 2026-10-08 · 개정: 2026-10-20 (6-4에 묶음별로 실제 들어 있는 것 추가, 2장 노드 최소 0·일정 갱신) · 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
+작성일: 2026-10-08 · 개정: 2026-10-20 (6-4에 묶음별로 실제 들어 있는 것 추가, 2장 노드 최소 0·일정 갱신, 6-5-2 관측 데이터가 남는 기간 추가) · 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
 MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1\~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
 
@@ -325,7 +325,7 @@ D안을 하려면 Terraform을 환경마다 두 묶음으로 나누고, 두 환�
 | 유지 묶음 (envs/<env>/persistent) | VPC·서브넷, RDS, SSM 접속용 t4g.nano, Secrets Manager, S3·CloudFront, SQS, IAM, EventBridge Scheduler, Loki 로그 버킷(S3), Cognito User Pool·트리거 Lambda | 그대로 둔다 (RDS·nano는 중지) |
 | 클러스터 묶음 (envs/<env>/cluster) | EKS, 노드 그룹, NAT Gateway, Helm으로 설치하는 것들(ArgoCD, LB Controller, metrics-server, External Secrets Operator). 관측성 스택은 ArgoCD가 `gitops` 레포에서 다시 설치한다 | 금요일에 삭제, 월요일에 생성 |
 
-RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 이미지는 주말 동안 그대로 남는다. Cognito User Pool도 유지 묶음이라 회원 계정이 남는다. Loki 로그도 S3에 있어서 남는다. Prometheus 지표(EBS 볼륨)와 Zipkin 추적(메모리)은 주말마다 사라진다. dev는 그 주 지표만 보면 되므로 받아들인다(지표를 남기려면 Thanos 같은 S3 보관 장치가 더 필요하다).
+RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 이미지는 주말 동안 그대로 남는다. Cognito User Pool도 유지 묶음이라 회원 계정이 남는다. Loki 로그도 S3에 있어서 남는다. Prometheus 지표(EBS 볼륨)는 주말마다, Zipkin 추적(메모리)은 매일 밤 노드가 0대가 될 때마다 사라진다(6-5-2). dev는 그 주 지표만 보면 되므로 받아들인다(지표를 남기려면 Thanos 같은 S3 보관 장치가 더 필요하다).
 
 
 **묶음별로 실제 들어 있는 것** (2026-10-20 `infra` 코드 기준)
@@ -413,6 +413,24 @@ infra/
 - 스케줄러가 쓰는 IAM Role에는 해당 RDS 인스턴스와 노드 그룹에 대한 `rds:StopDBInstance`, `rds:StartDBInstance`, `ec2:StopInstances`, `ec2:StartInstances`(nano 한 대만), `eks:UpdateNodegroupConfig`만 준다.
 - 주말에는 클러스터가 없어 노드 그룹 일정이 실패하므로 노드 일정은 평일에만 둔다. RDS는 중지 후 7일이 지나면 자동으로 켜지지만 평일마다 껐다 켜므로 문제없다.
 - 위 일정은 dev 기준이다. **prod는 같은 워크플로·스케줄을 `env=prod`로 쓰되, 클러스터를 평소에 꺼 두고 릴리스 확인·리허설·시연 날만 켠다.** prod RDS도 쓰지 않는 날은 중지해 둔다. 오래 꺼 두면 7일 뒤 자동으로 켜지는데, 매일 23:00 안전 끄기가 다시 끈다.
+
+#### 6-5-2. 관측 데이터가 남는 기간 (dev, 2026-10-20)
+
+위 일정 때문에 관측 데이터마다 남는 기간이 다르다.
+
+| 종류 | 어디에 | 얼마나 |
+| --- | --- | --- |
+| 서비스 로그 (에러 로그 포함) | Loki → S3 | 14일. 클러스터를 지워도 남는다 |
+| 요청 수·응답 시간·JVM 같은 지표 | Prometheus (클러스터 디스크, EBS 10 GiB) | 3일. 밤에 노드가 0대가 돼도 남지만 금요일 클러스터 삭제 때 사라진다 |
+| traceId 추적 (Zipkin) | Zipkin 메모리 | Zipkin 파드가 다시 뜨면 사라진다 (최대 10만 건). 사실상 **그날 하루치만** 남는다 |
+| Lambda 로그 (가입 확인, 비용 메일, 켜고 끄기) | CloudWatch Logs | 14일 |
+
+**Zipkin 파드가 다시 뜨는 때.**
+
+- **매일 밤 (예정).** 월\~목 21:00 노드 그룹이 0대가 되면 Zipkin 파드도 내려가고, 화\~금 09:10 노드가 뜰 때 빈 상태로 다시 뜬다. 금요일은 21:05 클러스터 삭제로 사라지고 월요일 08:40 생성 뒤 다시 뜬다. 그래서 추적은 켜져 있는 09:10\~21:00 사이에 본다. 전날 오류의 traceId는 Loki 로그에는 남지만 Zipkin에서는 찾을 수 없다.
+- **예정에 없는 때.** 메모리 상한(768Mi)을 넘겨 OOMKilled될 때, 노드 자리가 모자라 앱에 밀려날 때(PriorityClass `freshlink-observability`가 -100이라 관측성 파드가 먼저 밀려난다), `gitops`의 `platform/observability/manifests/zipkin.yaml`을 바꿔 ArgoCD가 다시 배포할 때, 노드가 바뀔 때. 지금 몇 번 재시작했는지는 `kubectl -n observability get pod -l app.kubernetes.io/name=zipkin`의 `RESTARTS`와 `AGE`로 본다.
+
+설정 위치: Loki `gitops` `platform/observability/values/loki.yaml`의 `retention_period: 336h`와 infra `modules/observability` S3 수명 주기(15일, 남은 것 정리용), Prometheus `values/kube-prometheus-stack.yaml`의 `retention: 3d`, Zipkin `manifests/zipkin.yaml`의 `STORAGE_TYPE=mem`·`MEM_MAX_SPANS=100000`, Lambda 로그 infra `modules/{cognito,cost-report,workflow-dispatch}`의 로그 보관 14일. Loki는 WAL을 파드 안 임시 디스크에 두므로 밤에 노드가 내려갈 때 아직 S3로 올라가지 않은 몇 분 치 로그를 잃을 수 있다.
 
 ### 6-6. dev·prod 합계 (지원금 50만 원 안)
 
