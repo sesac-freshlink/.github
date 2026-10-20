@@ -1,8 +1,8 @@
 # AWS 리소스 계획
 
-작성일: 2026-10-08 · 개정: 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
+작성일: 2026-10-08 · 개정: 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
-MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
+MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1\~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
 
 ---
 
@@ -168,7 +168,7 @@ Graviton(t4g.large)은 약 20% 싸지만 arm64 이미지를 따로 빌드해야 
 
 ### 5-1. 가용 영역
 
-**ap-northeast-2a와 2c 두 곳**을 쓴다. 서울 리전에는 가용 영역이 4개(2a~2d) 있지만, 노드 2대와 RDS 서브넷 그룹 조건(최소 2개 AZ)을 맞추는 데는 2개면 충분하다. Terraform으로 만들기 전에 `aws ec2 describe-instance-type-offerings`로 두 AZ 모두 t3.large를 지원하는지 확인한다.
+**ap-northeast-2a와 2c 두 곳**을 쓴다. 서울 리전에는 가용 영역이 4개(2a\~2d) 있지만, 노드 2대와 RDS 서브넷 그룹 조건(최소 2개 AZ)을 맞추는 데는 2개면 충분하다. Terraform으로 만들기 전에 `aws ec2 describe-instance-type-offerings`로 두 AZ 모두 t3.large를 지원하는지 확인한다.
 
 ### 5-2. 서브넷 설계 (3계층)
 
@@ -249,16 +249,16 @@ flowchart TB
 
 ## 6. 예상 비용
 
-> 2026-10-20: 아래는 10/08 계획 때의 어림값이다. 실제 Terraform 구성과 서울 리전 단가로 dev + prod를 10/19~11/20 기준으로 다시 계산한 값은 [비용-계산.md](비용-계산.md)에 있다.
+> 2026-10-20: 아래는 10/08 계획 때의 어림값이다. 실제 Terraform 구성과 서울 리전 단가로 dev + prod를 10/19\~11/20 기준으로 다시 계산한 값은 [비용-계산.md](비용-계산.md)에 있다.
 
 ### 6-1. 사용 시간
 
-6-1~6-5는 **환경 1개(dev)** 기준이다. dev와 prod를 합친 금액은 6-6에 있다.
+6-1\~6-5는 **환경 1개(dev)** 기준이다. dev와 prod를 합친 금액은 6-6에 있다.
 
 | 구분 | 계산 | 시간 |
 | --- | --- | --- |
 | 전체 기간 | 5주 × 168시간 | 840시간 |
-| 켜 두는 시간 | 5주 × 5일 × 12시간 (월~금 09:00~21:00) | 300시간 |
+| 켜 두는 시간 | 5주 × 5일 × 12시간 (월\~금 09:00\~21:00) | 300시간 |
 | 추가 개발 (21:00 이후) | 기간 전체 합계 | 10시간 |
 | **실제 사용** |  | **310시간** (전체의 약 37%) |
 
@@ -296,7 +296,7 @@ flowchart TB
 - A: 모든 리소스 840시간 → EKS 84 + 노드 175 + RDS 42 + NAT 53 + ALB 21 + IPv4 13 + 기타 8 ≈ 400
 - B: 노드와 RDS만 310시간 → 노드 65, RDS 16으로 줄어 약 265
 - C: NAT도 310시간 → NAT 20, NAT의 IPv4도 줄어 약 225
-- D: 주말 4번 × 60시간(금 21시~월 9시) = 240시간 동안 EKS·ALB·ALB IPv4까지 없음 → 약 30 절약해 약 195
+- D: 주말 4번 × 60시간(금 21시\~월 9시) = 240시간 동안 EKS·ALB·ALB IPv4까지 없음 → 약 30 절약해 약 195
 - 관측성을 넣으면 위 금액에 약 5가 더해진다 (D안 약 200). 3번째 노드를 켜 두는 시간에 같이 켜면 약 30이 더 든다.
 
 ### 6-4. 권장: D안
@@ -332,23 +332,23 @@ RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 �
 사람이 손으로 끄면 반드시 잊는 날이 생긴다. 일을 성격에 따라 둘로 나눠 자동화한다.
 
 - **AWS API 한 번으로 끝나는 일 → EventBridge Scheduler.** RDS 중지·시작(`StopDBInstance`/`StartDBInstance`), SSM 접속용 t4g.nano 중지·시작(`StopInstances`/`StartInstances`, RDS와 같은 시각), 노드 그룹 0대·2대(`UpdateNodegroupConfig`의 desired 변경). Lambda 없이 스케줄러가 API를 직접 부르고, 시간대를 `Asia/Seoul`로 지정한다. Terraform 유지 묶음에 정의한다.
-- **Terraform을 돌려야 하는 일 → GitHub Actions.** NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성. EKS 생성만 15~20분이라 Lambda(최대 15분)로는 안 되고, Terraform state도 다뤄야 한다.
+- **Terraform을 돌려야 하는 일 → GitHub Actions.** NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성. EKS 생성만 15\~20분이라 Lambda(최대 15분)로는 안 되고, Terraform state도 다뤄야 한다.
 
 | 시각 (한국) | 작업 | 방식 |
 | --- | --- | --- |
-| 월 08:40 | 클러스터 묶음 생성(노드 2대 포함) | GitHub Actions (생성에 15~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
-| 화~금 09:00 | NAT 생성 | GitHub Actions |
-| 월~금 09:00 | RDS·nano 시작 | EventBridge Scheduler |
-| 화~금 09:10 | 노드 그룹 desired 2 | EventBridge Scheduler (NAT가 생긴 뒤라 이미지를 받을 수 있다) |
-| 월~목 21:00 | 노드 그룹 desired 0 | EventBridge Scheduler |
-| 월~금 21:00 | RDS·nano 중지 | EventBridge Scheduler |
-| 월~목 21:10 | NAT 삭제 | GitHub Actions |
+| 월 08:40 | 클러스터 묶음 생성(노드 2대 포함) | GitHub Actions (생성에 15\~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
+| 화\~금 09:00 | NAT 생성 | GitHub Actions |
+| 월\~금 09:00 | RDS·nano 시작 | EventBridge Scheduler |
+| 화\~금 09:10 | 노드 그룹 desired 2 | EventBridge Scheduler (NAT가 생긴 뒤라 이미지를 받을 수 있다) |
+| 월\~목 21:00 | 노드 그룹 desired 0 | EventBridge Scheduler |
+| 월\~금 21:00 | RDS·nano 중지 | EventBridge Scheduler |
+| 월\~목 21:10 | NAT 삭제 | GitHub Actions |
 | 금 21:00 | 클러스터 묶음 삭제 | GitHub Actions |
 | 매일 23:00 | 켜져 있으면 끄기 (RDS·nano 중지, 노드 0대) | EventBridge Scheduler (추가 개발 후 잊었을 때 대비) |
 | 매일 23:00 | NAT가 남아 있으면 삭제 | GitHub Actions |
 | 추가 개발 시 | "인프라 켜기" / "인프라 끄기" | 수동 실행 버튼 (workflow_dispatch) |
 
-노드가 0대에서 다시 뜨고 Spring 앱이 모두 준비되기까지 5~10분이 걸리므로, 화~금은 09:00에 켜기 시작해 09:10~09:20쯤 앱이 준비된다. 월요일은 클러스터 생성(15~20분)을 감안해 08:40에 시작한다. (2026-10-14 변경: 켜 두는 시간을 09:30~17:30에서 09:00~21:00으로 늘렸다. 비용은 6-3 D안 기준 약 150 → 약 195 USD.) EventBridge Scheduler는 시간대를 지정하므로 한국 시각 그대로 적고, GitHub Actions 예약 작업은 UTC 기준이라 9시간을 빼서 적는다(Actions 예약 작업은 수 분 늦게 돌 수 있어 여유를 둔다). 월 08:40은 UTC로 **일요일** 23:40이라 cron 요일이 하루 앞당겨진다(`40 23 * * 0`). 21:00은 UTC 12:00이다.
+노드가 0대에서 다시 뜨고 Spring 앱이 모두 준비되기까지 5\~10분이 걸리므로, 화\~금은 09:00에 켜기 시작해 09:10\~09:20쯤 앱이 준비된다. 월요일은 클러스터 생성(15\~20분)을 감안해 08:40에 시작한다. (2026-10-14 변경: 켜 두는 시간을 09:30\~17:30에서 09:00\~21:00으로 늘렸다. 비용은 6-3 D안 기준 약 150 → 약 195 USD.) EventBridge Scheduler는 시간대를 지정하므로 한국 시각 그대로 적고, GitHub Actions 예약 작업은 UTC 기준이라 9시간을 빼서 적는다(Actions 예약 작업은 수 분 늦게 돌 수 있어 여유를 둔다). 월 08:40은 UTC로 **일요일** 23:40이라 cron 요일이 하루 앞당겨진다(`40 23 * * 0`). 21:00은 UTC 12:00이다.
 
 주의할 것:
 - 노드 그룹의 `scaling_config.desired_size`는 Terraform `lifecycle { ignore_changes }`에 넣는다. 안 그러면 다음 `apply` 때 스케줄러가 바꾼 값이 되돌아간다.
@@ -360,10 +360,10 @@ RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 �
 
 | 환경 | 운영 방식 | 예상 (USD) |
 | --- | --- | --- |
-| dev (약 4주) | D안: 평일 09:00~21:00만 노드·RDS·NAT 켬, 주말 클러스터 삭제 | 약 150~160 |
-| prod (약 2주) | D안과 같게. 단 릴리스 확인·리허설·시연 날만 클러스터를 켠다 | 약 40~60 |
-| 공용 | ECR(두 환경 공용), CloudFront 2개, S3, SQS, Cognito, 관측성 스토리지, SSM 접속용 인스턴스 | 약 15~20 |
-| **합계** |  | **약 205~240 (약 28~33만 원)** |
+| dev (약 4주) | D안: 평일 09:00\~21:00만 노드·RDS·NAT 켬, 주말 클러스터 삭제 | 약 150\~160 |
+| prod (약 2주) | D안과 같게. 단 릴리스 확인·리허설·시연 날만 클러스터를 켠다 | 약 40\~60 |
+| 공용 | ECR(두 환경 공용), CloudFront 2개, S3, SQS, Cognito, 관측성 스토리지, SSM 접속용 인스턴스 | 약 15\~20 |
+| **합계** |  | **약 205\~240 (약 28\~33만 원)** |
 
 dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데, 실제로는 첫 주에 dev 기반을 만들면서 켜는 시간이 짧아 4주분으로 잡았다. 남는 약 17만 원은 3번째 노드(부하 시험), 예측 실패, 시연 직전 상시 가동 대비 여유다. **두 환경을 상시로 켜 두면 5주에 약 800 USD라 지원금을 넘는다.** 그래서 끄는 장치(EventBridge Scheduler, 주말 삭제)는 빼면 안 된다. AWS Budgets는 10월·11월 월 예산 합계가 360 USD를 넘지 않게 나누고, 50·80·100%와 예측 초과 때 세 사람에게 메일을 보낸다.
 
@@ -373,7 +373,7 @@ dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데,
 | --- | --- | --- |
 | 스케줄러 중복 실행 | inventory·order를 2개씩 띄우면 유통기한 스케줄러와 10분 미결제 스케줄러가 **두 번씩 돈다.** ShedLock으로 한 파드만 실행되게 한다 | 이태우, 김경우 |
 | JVM 메모리 설정 | 컨테이너 메모리 상한에 맞추도록 `-XX:MaxRAMPercentage=75`를 준다. 안 주면 상한을 넘어 파드가 강제 종료(OOMKilled)될 수 있다 | 김진아 (공통 Dockerfile) |
-| 기동 시간 | Spring Boot는 뜨는 데 20~40초 걸린다. readinessProbe 초기 지연을 넉넉히 줘서, 준비 안 된 파드로 요청이 가지 않게 한다 | 김진아 (Helm 템플릿) |
+| 기동 시간 | Spring Boot는 뜨는 데 20\~40초 걸린다. readinessProbe 초기 지연을 넉넉히 줘서, 준비 안 된 파드로 요청이 가지 않게 한다 | 김진아 (Helm 템플릿) |
 | 오토스케일링 | MVP에서는 HPA·노드 오토스케일러를 쓰지 않고 파드 수를 고정한다. 노드 그룹 최대 3은 수동 증설용이다 | 김진아 |
 | Outbox와 추적 | Outbox 발행기는 별도 스케줄러 스레드에서 쪽지를 보내므로, 그냥 두면 주문 요청의 추적이 큐 앞에서 끊긴다. outbox 표에 `trace_parent` 칸을 두고 저장할 때 현재 추적 정보를 넣고, 발행기가 SQS 메시지 속성(`traceparent`)으로 실어 보낸다. 받는 쪽 리스너는 이 값을 이어받는다 | 김진아 (공통 모듈) |
 | Actuator 노출 | Actuator는 앱 포트에 둔다(관리 포트를 따로 두지 않는다). dev·prod 모두 모든 컨테이너가 8080 하나를 쓰고(차트가 `SERVER_PORT=8080`을 넣는다), probe는 `/actuator/health/liveness`·`readiness`, ServiceMonitor는 `/actuator/prometheus`를 8080에서 본다. 밖으로 나가지 않게 ALB Ingress·CloudFront는 `/api/*`만 gateway로 넘기고, gateway는 `/actuator` 라우트를 두지 않으며 외부 `/actuator` 요청을 Spring Security로 막는다(health만 열거나 클러스터 안 요청만) | 김진아 (Helm 템플릿) |
