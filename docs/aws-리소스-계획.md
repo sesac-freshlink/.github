@@ -332,23 +332,44 @@ RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 �
 사람이 손으로 끄면 반드시 잊는 날이 생긴다. 일을 성격에 따라 둘로 나눠 자동화한다.
 
 - **AWS API 한 번으로 끝나는 일 → EventBridge Scheduler.** RDS 중지·시작(`StopDBInstance`/`StartDBInstance`), SSM 접속용 t4g.nano 중지·시작(`StopInstances`/`StartInstances`, RDS와 같은 시각), 노드 그룹 0대·2대(`UpdateNodegroupConfig`의 desired 변경). Lambda 없이 스케줄러가 API를 직접 부르고, 시간대를 `Asia/Seoul`로 지정한다. Terraform 유지 묶음에 정의한다.
-- **Terraform을 돌려야 하는 일 → GitHub Actions.** NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성. EKS 생성만 15\~20분이라 Lambda(최대 15분)로는 안 되고, Terraform state도 다뤄야 한다.
+- **Terraform을 돌려야 하는 일 → 시각은 EventBridge Scheduler, 실행은 GitHub Actions.** NAT 삭제·생성, 금요일 클러스터 삭제, 월요일 클러스터 생성. EKS 생성만 15\~20분이라 Lambda(최대 15분)로는 Terraform을 못 돌리고, Terraform state도 다뤄야 해서 실행은 GitHub Actions(infra `dev-cluster.yml`)가 맡는다. 다만 **언제 돌릴지는 EventBridge Scheduler가 정한다.** 정해진 시각에 작은 Lambda `freshlink-dev-workflow-dispatch`가 GitHub API(workflow_dispatch)로 워크플로의 **Run workflow** 버튼을 대신 누른다. 이 Lambda는 1초 안에 끝난다. (2026-10-20 변경, 아래 6-5-1)
 
 | 시각 (한국) | 작업 | 방식 |
 | --- | --- | --- |
-| 월 08:40 | 클러스터 묶음 생성(노드 2대 포함) | GitHub Actions (생성에 15\~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
-| 화\~금 09:00 | NAT 생성 | GitHub Actions |
+| 월 08:40 | 클러스터 묶음 생성(노드 2대·NAT 포함) | EventBridge → GitHub Actions (생성에 15\~20분이 걸려 09:00 전후에 켜진다. 월요일은 노드 그룹이 apply 뒤에 생기므로 한 번에 처리) |
+| 화·수·목·금 08:50 | NAT 생성 | EventBridge → GitHub Actions (09:10 노드보다 먼저) |
 | 월\~금 09:00 | RDS·nano 시작 | EventBridge Scheduler |
 | 화\~금 09:10 | 노드 그룹 desired 2 | EventBridge Scheduler (NAT가 생긴 뒤라 이미지를 받을 수 있다) |
 | 월\~목 21:00 | 노드 그룹 desired 0 | EventBridge Scheduler |
 | 월\~금 21:00 | RDS·nano 중지 | EventBridge Scheduler |
-| 월\~목 21:10 | NAT 삭제 | GitHub Actions |
-| 금 21:00 | 클러스터 묶음 삭제 | GitHub Actions |
+| 월·화·수·목 21:10 | NAT 삭제 | EventBridge → GitHub Actions |
+| 금 21:05 | 클러스터 묶음 삭제 | EventBridge → GitHub Actions |
 | 매일 23:00 | 켜져 있으면 끄기 (RDS·nano 중지, 노드 0대) | EventBridge Scheduler (추가 개발 후 잊었을 때 대비) |
-| 매일 23:00 | NAT가 남아 있으면 삭제 | GitHub Actions |
+| 매일 23:05 | NAT가 남아 있으면 삭제 | EventBridge → GitHub Actions |
 | 추가 개발 시 | "인프라 켜기" / "인프라 끄기" | 수동 실행 버튼 (workflow_dispatch) |
 
-노드가 0대에서 다시 뜨고 Spring 앱이 모두 준비되기까지 5\~10분이 걸리므로, 화\~금은 09:00에 켜기 시작해 09:10\~09:20쯤 앱이 준비된다. 월요일은 클러스터 생성(15\~20분)을 감안해 08:40에 시작한다. (2026-10-14 변경: 켜 두는 시간을 09:30\~17:30에서 09:00\~21:00으로 늘렸다. 비용은 6-3 D안 기준 약 150 → 약 195 USD.) EventBridge Scheduler는 시간대를 지정하므로 한국 시각 그대로 적고, GitHub Actions 예약 작업은 UTC 기준이라 9시간을 빼서 적는다(Actions 예약 작업은 수 분 늦게 돌 수 있어 여유를 둔다). 월 08:40은 UTC로 **일요일** 23:40이라 cron 요일이 하루 앞당겨진다(`40 23 * * 0`). 21:00은 UTC 12:00이다.
+노드가 0대에서 다시 뜨고 Spring 앱이 모두 준비되기까지 5\~10분이 걸리므로, 화\~금은 08:50에 NAT를 만들고 09:10에 노드를 띄워 09:20쯤 앱이 준비된다. 월요일은 클러스터 생성(15\~20분)을 감안해 08:40에 시작한다. (2026-10-14 변경: 켜 두는 시간을 09:30\~17:30에서 09:00\~21:00으로 늘렸다. 비용은 6-3 D안 기준 약 150 → 약 195 USD.) EventBridge Scheduler는 시간대(`Asia/Seoul`)를 지정하므로 한국 시각 그대로 적는다.
+
+#### 6-5-1. EventBridge가 누르는 워크플로 일정 5개 (2026-10-20)
+
+**바꾼 이유.** 처음에는 Terraform 일을 GitHub Actions 예약(`schedule`, UTC cron)에 맡기고 "몇 분 늦을 수 있다"고만 가정했다. 실제로는 2026-10-19 21:10 NAT 삭제가 다음 날 03:41에, 23:00 NAT 정리가 04:34에야 돌았고, 2026-10-20 화 09:00 NAT 생성은 아예 돌지 않았다. GitHub는 붐빌 때(특히 정각) 예약 실행을 몇 시간 늦추거나 건너뛴다. 그날 09:10 노드 일정(EventBridge)은 정시에 돌았지만 NAT가 없어 노드가 클러스터에 붙지 못했고 dev `/api`가 모두 503이었다. 그래서 시각은 정시에 도는 EventBridge Scheduler가 지키고, Terraform 실행만 GitHub Actions에 남겼다. 경위는 infra `docs/troubleshooting/2026-10-20-nat-예약-빠짐-노드-안-붙음.md`.
+
+**흐름.** EventBridge Scheduler(일정 그룹 `freshlink-dev-workflow-dispatch`) → Lambda `freshlink-dev-workflow-dispatch` → Secrets Manager `freshlink-dev-workflow-dispatch-token`에서 GitHub 토큰을 읽는다 → `POST /repos/sesac-freshlink/infra/actions/workflows/dev-cluster.yml/dispatches` (`ref: main`, `inputs.action`) → GitHub Actions `dev-cluster`가 Terraform을 돌린다.
+
+| 일정 이름 | 시각 (한국, cron) | 워크플로 action | 하는 일 | 이미 된 상태면 |
+| --- | --- | --- | --- | --- |
+| `freshlink-dev-workflow-dispatch-create` | 월 08:40 `cron(40 8 ? * MON *)` | `create` | 주말에 지운 클러스터 묶음 전체를 `terraform apply`로 만든다(EKS, 노드 그룹 2대, NAT, Helm으로 ArgoCD·LB Controller·metrics-server·ESO). 끝에 노드 2대를 맞추고 ArgoCD가 떴는지 보고, CloudFront `/api/*` 오리진을 새 ALB로 맞춘다. 15\~20분 | 클러스터가 이미 있으면 바뀌는 것이 없다 |
+| `freshlink-dev-workflow-dispatch-nat-on` | 화·수·목·금 08:50 `cron(50 8 ? * TUE-FRI *)` | `nat-on` | NAT 세 개(EIP, NAT Gateway, app 서브넷 기본 경로)만 `-target`으로 만든다. 09:10에 노드가 뜰 때 EKS API·ECR에 닿을 수 있게 20분 먼저 돈다. 3\~5분 | NAT가 있으면 변경 없음, 클러스터가 없으면 건너뜀 |
+| `freshlink-dev-workflow-dispatch-nat-off` | 월·화·수·목 21:10 `cron(10 21 ? * MON-THU *)` | `nat-off` | NAT 세 개만 지운다. 21:00에 노드가 0대가 된 뒤라 쓰는 곳이 없다. 클러스터는 남겨 둔다(ALB 주소·OIDC가 바뀌지 않게) | NAT가 없으면 변경 없음 |
+| `freshlink-dev-workflow-dispatch-destroy` | 금 21:05 `cron(5 21 ? * FRI *)` | `destroy` | 주말 동안 클러스터 묶음 전체를 지운다. 먼저 Ingress·PVC·ExternalSecret을 지워 ALB·EBS를 정리하고, `terraform destroy` 뒤 남은 ALB·ENI·EBS가 없는지 확인한다. 15분쯤 | 클러스터가 없으면 정리 단계를 건너뛰고 빈 state로 끝난다 |
+| `freshlink-dev-workflow-dispatch-nat-off-late` | 매일 23:05 `cron(5 23 * * ? *)` | `nat-off` | 안전장치. 사람이 낮에 `nat-on`을 누르거나 21:10이 실패해 NAT가 남아 있으면 지운다(NAT는 켜 두기만 해도 시간당 요금이 나간다) | NAT가 없으면 변경 없음 |
+
+- **두 번 돌아도 괜찮다.** 워크플로는 concurrency 그룹 `dev-cluster`로 한 번에 하나씩만 돌고, 각 작업은 이미 원하는 상태면 바뀌는 것이 없다. 진행 중인 실행은 취소하지 않는다(destroy 도중 취소는 state 잠금을 남긴다).
+- **GitHub 예약은 예비로 남긴다.** `dev-cluster.yml` 안의 cron(08:50·09:25 NAT 생성, 21:10 NAT 삭제, 21:05·22:35 삭제, 23:05 NAT 정리, 월 08:40 생성. 정각은 피함)도 그대로 둔다. 늦게 온 예약은 한국 시각을 보고 맞지 않으면 아무것도 하지 않는다: NAT 생성은 평일 8시부터 20시까지, NAT 삭제는 21시부터 다음 날 8시까지, 클러스터 생성은 월요일 8시부터 20시까지, 삭제는 금요일 21시부터 일요일까지만 한다. 그래서 늦게 온 NAT 삭제가 낮에 NAT를 지우지 않는다. 수동 버튼은 언제든 돈다.
+- **토큰.** GitHub fine-grained 토큰으로, `sesac-freshlink/infra` 저장소 하나에 Actions 읽기·쓰기만 준다(코드 읽기·쓰기 없음). 값은 Terraform에 넣지 않고 김진아가 `aws secretsmanager put-secret-value`로 넣는다(state에 남지 않게). 토큰이 만료되면 Lambda 로그에 `HTTP 401`이 남고 GitHub 예약(예비)만 돈다. 새 토큰을 만들어 같은 명령으로 넣는다(infra README 4-11).
+- **실패 처리.** Scheduler는 Lambda 호출을 최대 2번 다시 시도하고(15분 안), Lambda는 GitHub가 오류를 내면 예외로 끝나 다시 시도된다.
+- **비용.** 비밀 1개 월 0.4 USD. Lambda·Scheduler는 무료 한도 안이다.
+- **Terraform 위치.** infra `modules/workflow-dispatch`, dev 유지 묶음(`envs/dev/persistent`)의 `module "cluster_dispatch"`. `scheduler_enabled = false`면 RDS 일정과 함께 멈춘다.
 
 주의할 것:
 - 노드 그룹의 `scaling_config.desired_size`는 Terraform `lifecycle { ignore_changes }`에 넣는다. 안 그러면 다음 `apply` 때 스케줄러가 바꾼 값이 되돌아간다.
