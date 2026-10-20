@@ -1,6 +1,6 @@
 # AWS 리소스 계획
 
-작성일: 2026-10-08 · 개정: 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
+작성일: 2026-10-08 · 개정: 2026-10-20 (6-4에 묶음별로 실제 들어 있는 것 추가, 2장 노드 최소 0·일정 갱신) · 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
 MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1\~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
 
@@ -41,7 +41,7 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 구분 | 리소스 | 타입·크기 | 수량 | 용도 |
 | --- | --- | --- | --- | --- |
 | 컴퓨팅 | EKS 클러스터 (컨트롤 플레인) | 관리형 | 1 | 쿠버네티스 마스터. AWS가 운영 |
-| 컴퓨팅 | EKS 관리형 노드 그룹 | **t3.large** (2 vCPU, 8 GiB) | **2** (최소 2, 최대 3) | 모든 앱·시스템 파드 실행 |
+| 컴퓨팅 | EKS 관리형 노드 그룹 | **t3.large** (2 vCPU, 8 GiB) | **2** (최소 0, 최대 3) | 모든 앱·시스템 파드 실행 |
 | DB | RDS MySQL 8.4 | **db.t4g.small** (2 vCPU, 2 GiB), gp3 20 GiB, 단일 AZ | **1** | member·inventory·order 스키마 3개 |
 | DB 접속 | EC2 (SSM 접속용) | **t4g.nano**, SSM 에이전트만, 인바운드 없음 | 1 | SSM Session Manager 포트 포워딩으로 RDS에 접속하는 통로. RDS와 같이 켜고 끈다 |
 | 메시징 | SQS | 공용 세트 FIFO 1 + 표준 1 + DLQ 2. dev는 개발자별 세트를 더 둔다 | 4 (+ dev 개발자별) | 서비스 간 쪽지. 큐 이름에 환경 접두사(`dev-`, `prod-`)를 붙인다 |
@@ -56,7 +56,7 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 보안 | Secrets Manager | 비밀 | 앱 DB 비밀번호 3 + 토스 테스트 키 1 | External Secrets Operator가 읽어 파드의 Kubernetes Secret으로 넣는다 |
 | 인증 | Amazon Cognito User Pool | 그룹 3(OWNER, CUSTOMER, ADMIN), 앱 클라이언트 1 (시크릿 없음) | 1 | 회원가입·로그인·JWT 발급 ([기술스택과 선택이유.md](기술스택과%20선택이유.md) 3-7) |
 | 인증 | Lambda (Cognito 트리거) | Python, 128 MB | 1 | 가입 확인 시 CUSTOMER 그룹 배정 (일반 가입은 고객만) |
-| 운영 | EventBridge Scheduler | 일정 | 여러 개 | RDS·노드 그룹·SSM 접속용 인스턴스를 정해진 시각에 켜고 끈다 (6-5) |
+| 운영 | EventBridge Scheduler | 일정 | 여러 개 | RDS·노드 그룹·SSM 접속용 인스턴스를 정해진 시각에 켜고 끈다. 클러스터 생성·삭제와 NAT 켜고 끄기 워크플로도 Lambda를 거쳐 정해진 시각에 실행한다 (6-5) |
 | 비용 | AWS Budgets | - | 1 (계정 전체) | 금액 초과 알림. 첫 리소스보다 먼저 만든다 |
 | 관측성 | S3 버킷 (Loki 로그 저장) | 수명 주기 14일 | 1 | 유지 묶음에 둬서 주말 클러스터 삭제 뒤에도 로그가 남는다 |
 | 관측성 | EBS gp3 볼륨 (Prometheus 저장) | 10 GiB | 1 | EBS CSI 드라이버 애드온이 만든다. 지표는 3일만 보관 |
@@ -326,6 +326,43 @@ D안을 하려면 Terraform을 환경마다 두 묶음으로 나누고, 두 환�
 | 클러스터 묶음 (envs/<env>/cluster) | EKS, 노드 그룹, NAT Gateway, Helm으로 설치하는 것들(ArgoCD, LB Controller, metrics-server, External Secrets Operator). 관측성 스택은 ArgoCD가 `gitops` 레포에서 다시 설치한다 | 금요일에 삭제, 월요일에 생성 |
 
 RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 이미지는 주말 동안 그대로 남는다. Cognito User Pool도 유지 묶음이라 회원 계정이 남는다. Loki 로그도 S3에 있어서 남는다. Prometheus 지표(EBS 볼륨)와 Zipkin 추적(메모리)은 주말마다 사라진다. dev는 그 주 지표만 보면 되므로 받아들인다(지표를 남기려면 Thanos 같은 S3 보관 장치가 더 필요하다).
+
+
+**묶음별로 실제 들어 있는 것** (2026-10-20 `infra` 코드 기준)
+
+persistent는 dev cluster·prod cluster와 나란히 있는 것이 아니라, 환경마다 persistent와 cluster가 한 쌍씩 있다. 두 환경이 같이 쓰는 것은 global에 둔다.
+
+```
+infra/
+├─ global/                 두 환경 공용, 한 번 만들고 계속 둔다
+└─ envs/
+   ├─ dev/
+   │  ├─ persistent/       dev 유지 묶음 (계속 둔다)
+   │  └─ cluster/          dev 클러스터 (금요일 삭제, 월요일 생성)
+   └─ prod/
+      ├─ persistent/       prod 유지 묶음 (dev와 같은 모듈, 이름·IP 대역·일정만 다르다)
+      └─ cluster/          prod 클러스터 (확인·리허설·시연 날만 켠다)
+```
+
+유지 묶음(persistent)은 지우면 데이터나 주소가 날아가서 다시 만들기 번거로운 것을 모았다. 클러스터를 지웠다 만들어도 그대로라, 월요일에 클러스터가 다시 떠도 DB 내용, 회원 계정, 프론트 주소가 남는다. 껐다 켜는 것은 RDS와 SSM 접속용 nano뿐이고 나머지는 쓴 만큼만 요금이 나와 그대로 둔다.
+
+| persistent 안 모듈 | 들어 있는 것 | 쉽게 말하면 |
+| --- | --- | --- |
+| `network` | VPC, 서브넷 3종(public·app·db), 인터넷 게이트웨이, 라우팅 테이블, S3 엔드포인트 | 땅과 도로. NAT만 빠져 있다(cluster 쪽) |
+| `rds` | RDS MySQL, 보안 그룹, 앱 DB 비밀번호 3개(member·inventory·order), SSM 접속용 t4g.nano | 데이터베이스와 PC에서 DB에 붙는 통로 |
+| `scheduler` | EventBridge 일정: RDS·nano 켜고 끄기, 노드 0대·2대, 23:00 안전 끄기 | 상태만 바꾸는 알람 시계 |
+| `cluster_dispatch` | EventBridge 일정 + Lambda: 정해진 시각에 클러스터 켜고 끄기 워크플로를 실행 | GitHub 예약이 늦거나 빠져서 시각을 AWS 쪽에서 지킨다 |
+| `cluster_actions` | GitHub Actions가 빌려 쓰는 IAM Role | 클러스터를 만들고 지우는 출입증 |
+| `cognito` | User Pool, 그룹 OWNER·CUSTOMER·ADMIN, 앱 클라이언트, 가입 확인 Lambda, member용 권한, 시드 계정 비밀 | 회원 로그인 |
+| `messaging` | SQS 큐 4개(명령·결과와 각 DLQ). dev는 공용 `dev-` 세트 외에 개발자별 세트도 둔다 | 서비스끼리 주고받는 우편함 |
+| `frontend` | S3 버킷, CloudFront(`/api/*`는 gateway ALB로), 프론트 배포용 Role | 프론트 화면이 올라가는 곳 |
+| `observability` | Loki 로그용 S3 버킷(14일 보관) | 주말에 클러스터를 지워도 로그가 남는 곳 |
+| toss 비밀 | Secrets Manager 비밀 1개 | 토스 테스트 키 보관함 |
+
+| 다른 묶음 | 들어 있는 것 |
+| --- | --- |
+| global (두 환경 공용) | Terraform state 저장용 S3, ECR(이미지 저장소), GitHub OIDC 연결과 CI가 ECR에 push하는 Role, 팀원 IAM 사용자·그룹, 예산 알림, 매일 비용 메일 |
+| cluster (환경마다) | EKS, 노드 그룹, NAT, IRSA Role들, Helm으로 설치하는 ArgoCD·LB Controller·metrics-server·External Secrets Operator. 지워도 다시 만들면 똑같이 돌아온다 |
 
 ### 6-5. 켜고 끄는 일정
 
