@@ -3,10 +3,12 @@
 #   uses: sesac-freshlink/.github/.github/workflows/spring-build.yml@main
 #
 # 하는 일
-#   모든 실행: Gradle 빌드·테스트
+#   PR, dev push: Gradle 빌드·테스트 (build 작업)
 #   dev 브랜치 push(또는 dev에서 수동 실행)일 때만 이어서:
 #     ECR 이미지 푸시(태그 = 커밋 7자리) → gitops envs/dev/<서비스>/values.yaml 태그 커밋 → dev ArgoCD가 배포
-#   main 머지 때의 prod 태그 승격은 할 일 15에서 더한다.
+#   main push(release PR을 Merge commit으로 합침, 또는 main에서 수동 실행): 승격 (promote 작업, 할 일 15)
+#     빌드하지 않는다. 합친 dev 커밋의 이미지(dev CI가 이미 올린 태그)가 ECR에 있는지 보고
+#     gitops envs/prod/<서비스>/values.yaml 태그 커밋 → prod ArgoCD가 배포
 #
 # AWS는 GitHub OIDC로 Role freshlink-ci-ecr-push를 맡는다(저장된 AWS 키 없음). 그 Role은 서비스 레포의 dev·main 브랜치만 믿는다.
 # gitops 커밋은 조직 비밀 GITOPS_DEPLOY_KEY(gitops 레포 쓰기 deploy key)로 한다.
@@ -32,6 +34,8 @@ env:
 
 jobs:
   build:
+    # main push·수동 실행은 승격만 한다(아래 promote). main으로 가는 PR은 여기서 빌드·테스트한다
+    if: github.ref != 'refs/heads/main' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -168,6 +172,96 @@ jobs:
             git commit -am "chore(${SERVICE}): image ${TAG}"
             if git push origin HEAD:main; then
               echo "gitops 커밋: ${file} → ${TAG}" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep $((i * 3))
+          done
+          echo "::error::gitops push가 계속 실패했다"
+          exit 1
+
+  # ------------------------------------------------------------------ prod 승격 (main)
+  # dev에서 시험한 바로 그 이미지를 prod에 올린다. 다시 빌드하면 의존성·베이스 이미지가 달라질 수 있다.
+  promote:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write  # AWS OIDC (ECR 이미지 확인만)
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2   # 합친 커밋과 그 부모들
+
+      # release PR은 Merge commit으로 합친다(gitops README 4-2). 그러면 main 커밋의 두 번째 부모가 합친 dev 커밋이고,
+      # 그 커밋의 7자리가 dev CI가 올린 이미지 태그다. 두 번째 부모가 없으면(main에 바로 push·fast-forward) main 커밋 자체를 본다.
+      - name: 올릴 태그 고르기
+        id: meta
+        env:
+          INPUT_SERVICE: ${{ inputs.service }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          service="${INPUT_SERVICE:-$REPO}"
+          if src=$(git rev-parse -q --verify 'HEAD^2'); then
+            how="합친 dev 커밋(main ${GITHUB_SHA:0:7}의 두 번째 부모)"
+          else
+            src=$(git rev-parse HEAD)
+            how="main 커밋 자체(Merge commit이 아님)"
+          fi
+          tag="${src:0:7}"
+          {
+            echo "service=${service}"
+            echo "tag=${tag}"
+          } >> "$GITHUB_OUTPUT"
+          echo "### ${service} prod 승격 · ${tag} · ${how}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: dev 이미지가 ECR에 있는지
+        env:
+          SERVICE: ${{ steps.meta.outputs.service }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if ! aws ecr describe-images --repository-name "$SERVICE" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "::error::ECR에 ${SERVICE}:${TAG}가 없다. dev에서 이 커밋의 CI가 끝났는지 보고, release PR은 Merge commit으로 합친다. dev CI가 끝난 뒤 main에서 ci를 수동 실행하면 다시 승격한다"
+            exit 1
+          fi
+          echo "ECR ${SERVICE}:${TAG} 있음" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: gitops 받기
+        uses: actions/checkout@v7
+        with:
+          repository: sesac-freshlink/gitops
+          ref: main
+          path: .gitops
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
+
+      - name: gitops prod 태그 커밋
+        working-directory: .gitops
+        env:
+          SERVICE: ${{ steps.meta.outputs.service }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          file="envs/prod/${SERVICE}/values.yaml"
+          [ -f "$file" ] || { echo "::error::${file}이 gitops에 없다"; exit 1; }
+          git config user.name "freshlink-ci"
+          git config user.email "freshlink-ci@users.noreply.github.com"
+          # dev 태그 커밋과 같은 방식: 밀리면 받아서 다시 바꾸고 다시 push한다
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            sed -i -E "s/^(  tag: )\"[^\"]*\"/\1\"${TAG}\"/" "$file"
+            [ "$(yq '.image.tag' "$file")" = "$TAG" ] || { echo "::error::${file}의 image.tag를 바꾸지 못했다"; exit 1; }
+            if git diff --quiet; then
+              echo "prod는 이미 ${TAG}다" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            git commit -am "chore(${SERVICE}): prod image ${TAG}"
+            if git push origin HEAD:main; then
+              echo "gitops 커밋: ${file} → ${TAG} (prod ArgoCD가 가져간다. prod 클러스터가 꺼져 있으면 켤 때 맞춘다)" >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             sleep $((i * 3))
