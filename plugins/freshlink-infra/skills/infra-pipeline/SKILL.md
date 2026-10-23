@@ -131,7 +131,7 @@ ok / 고칠 점 / 멈춰
 - 기본: 작업 브랜치(`feat/I-xx-설명`, 문서만이면 `docs/설명`) → 커밋 → `git push -u origin <브랜치>` → `gh pr create`.
 - PR 대상: `infra`·`.github`는 `main`, `gitops`는 레포 기본 브랜치, 서비스 레포는 `dev`. 레포 `CLAUDE.md`나 `.github`의 `CONTRIBUTING.md`가 다르게 정하면 그것을 따른다.
 - 커밋 메시지·PR 제목: `feat:`/`fix:`/`docs:`/`chore:` + 한국어 요약. PR 본문은 공통 PR 템플릿을 채운다. `infra` PR에는 `terraform plan` 요약을 붙인다 (`/plan-summary`, plan을 안 돌렸으면 "plan 미실행"이라고 적는다).
-- **PR은 필수다.** `main`·`dev`에 직접 push하지 않는다 (강제 push도 금지). 합치기는 사람이 CodeRabbit 지적이 없고 CI 빌드가 통과한 것을 보고 직접 한다.
+- **PR은 필수다.** `main`·`dev`에 직접 push하지 않는다 (강제 push도 금지). 합치기는 사람이 CI 빌드가 통과한 것을 보고 직접 한다 (CodeRabbit은 선택).
 - `gh`가 없거나 로그인이 안 되어 있으면 push까지만 하고 PR 만드는 링크를 알려 준다.
 
 ### 최종 보고
