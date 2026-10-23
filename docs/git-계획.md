@@ -39,7 +39,7 @@ Organization 표시 이름(Display name)은 `FreshLink`로 둔다. URL에 쓰이
 | `inventory-service` | 상품·재고·입고·예약·폐기 | 이태우 | ECR → EKS |
 | `order-service` | 주문·결제·Saga | 김경우 | ECR → EKS |
 | `logistics-simulator` | 가상 물류센터, INBOUND 쪽지 발행 | 김진아 | ECR → EKS |
-| `frontend` | React (점주 `/owner`, 고객 `/customer`) | 공통 (레이아웃: 김진아) | S3 + CloudFront |
+| `frontend` | React (점주 `/owner`, 고객 `/customer`) | 팀 공동 (공통 로직은 김진아가 처음 세팅만, 이후 누구나 수정) | S3 + CloudFront |
 | `common` | 공통 모듈: Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 | GitHub Packages (Maven) |
 | `infra` | Terraform (persistent / cluster 묶음) | 김진아 | `terraform apply` |
 | `gitops` | Helm 차트 + 서비스별 values + ArgoCD Application | 김진아 | ArgoCD가 읽어 감 |
@@ -174,12 +174,14 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 
 ### 4-4. 브랜치 보호 (레포마다 규칙 세트로 건다)
 
-**결정 (2026-10-16, 10/12 결정을 바꿈): PR은 필수, 승인은 필수 아님.** 자기 레포라도 `main`·`dev`에 직접 push하지 않고 PR로 합친다. 합치기 전에 **AI 코드 리뷰(CodeRabbit)에서 더 이상 고치라는 지적이 없고**, **GitHub CI 빌드 체크가 통과**해야 한다. 둘 다 통과하면 승인 없이 담당자가 직접 합친다. CodeRabbit 연결은 각자 직접 한다. 쪽지 형식이 바뀌는 변경(`message-spec`)은 합치기 전에 상대 담당자에게 꼭 알린다.
+**결정 (2026-10-16, 10/12 결정을 바꿈): PR은 필수, 승인은 필수 아님.** 자기 레포라도 `main`·`dev`에 직접 push하지 않고 PR로 합친다.
+
+**결정 (2026-10-23, 10/16 결정을 바꿈): 합치는 조건은 GitHub Actions CI 빌드 체크 통과 하나다.** AI 코드 리뷰(CodeRabbit)는 선택이다. 연결해 둔 레포라면 지적을 참고하되, 남은 지적이 있어도 CI가 초록이면 승인 없이 담당자가 직접 합친다. 빌드 워크플로가 없는 레포(`.github`)는 바로 합친다. 쪽지 형식이 바뀌는 변경(`message-spec`)은 합치기 전에 상대 담당자에게 꼭 알린다.
 
 | 브랜치 | 규칙 |
 | --- | --- |
-| `main` | PR로만 합친다. AI 리뷰 지적 없음 + CI 빌드 통과 뒤 합침, 승인 필수 없음. 강제 push·브랜치 삭제 금지 |
-| `dev` | PR로만 합친다. AI 리뷰 지적 없음 + CI 빌드 통과 뒤 합침, 승인 필수 없음. 강제 push·브랜치 삭제 금지 |
+| `main` | PR로만 합친다. CI 빌드 통과 뒤 합침 (AI 리뷰는 선택), 승인 필수 없음. 강제 push·브랜치 삭제 금지 |
+| `dev` | PR로만 합친다. CI 빌드 통과 뒤 합침 (AI 리뷰는 선택), 승인 필수 없음. 강제 push·브랜치 삭제 금지 |
 | 작업 브랜치 | 제한 없음. 합치면 자동 삭제 (레포 설정 'Automatically delete head branches' 켜기) |
 
 합치는 방식은 **작업 브랜치 → `dev`: Squash merge**, **`dev` → `main`: Merge commit**으로 한다. 기능 하나가 `dev`에 커밋 하나로 남아 이력이 깔끔해지고, `main`에는 '언제 배포했는지'가 머지 커밋으로 남는다.
@@ -207,7 +209,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 ### 5-2. PR
 
 - **제목:** 커밋 메시지와 같은 형식. `feat(S-32): 폐기 처리`. Squash merge하면 PR 제목이 `dev`의 커밋 메시지가 된다.
-- **본문:** `.github` 레포의 공통 PR 템플릿을 쓴다. 항목은 `관련 기능 ID`, `무엇을 바꿨나`, `확인 방법`(Swagger 캡처, 로그 등), `남길 말`. AI 리뷰 지적이 없고 CI 빌드가 통과하면 승인 없이 담당자가 직접 합친다(4-4).
+- **본문:** `.github` 레포의 공통 PR 템플릿을 쓴다. 항목은 `관련 기능 ID`, `무엇을 바꿨나`, `확인 방법`(Swagger 캡처, 로그 등), `남길 말`. CI 빌드가 통과하면 승인 없이 담당자가 직접 합친다(4-4, AI 리뷰는 선택).
 - **`dev` → `main` PR 제목:** `release: 2026-10-24 배포` (날짜로 쓴다).
 
 ### 5-3. 이슈 · 프로젝트 보드
@@ -274,9 +276,11 @@ flowchart LR
 | `inventory-service` | 이태우 |
 | `member-service`, `order-service` | 김경우 |
 | `gateway`, `logistics-simulator`, `common`, `infra`, `gitops` | 김진아 |
-| `frontend` | `/src/owner/inventory/**` 이태우 · `/src/customer/order/**` 김경우 · 나머지 김진아 |
+| `frontend` | `/src/owner/inventory/**` 이태우 · `/src/customer/order/**` 김경우 · 나머지 김진아 (알림용. 공통 로직은 누구나 고친다) |
 
-PR은 필수지만 승인 필수, CODEOWNERS 승인 필수는 걸지 않는다. 담당자가 AI 리뷰와 CI 빌드를 통과시킨 뒤 직접 합친다(4-4, 2026-10-16 결정).
+PR은 필수지만 승인 필수, CODEOWNERS 승인 필수는 걸지 않는다. 담당자가 CI 빌드를 통과시킨 뒤 직접 합친다(4-4, 2026-10-23 결정).
+
+**프론트엔드 공통 로직과 문의 범위 (2026-10-23):** `frontend`의 공통 로직(레이아웃, 라우팅, 역할 가드, `src/shared`)은 김진아가 처음 세팅만 했고, 이후에는 팀원이 자유롭게 고친다. CODEOWNERS 때문에 김진아가 리뷰어로 지정돼도 승인은 필요 없다. 김진아에게는 **인프라와 백엔드 공통(`common`·`gateway`·공통 규칙)** 문제만 묻는다(`CONTRIBUTING.md` 8장).
 
 시크릿(AWS 키, 토스 테스트 키)은 **Organization Secret**으로 한 번만 등록하고, 쓰는 레포에만 공개한다. AWS는 키 대신 GitHub OIDC로 IAM Role을 맡게 하는 것을 권장한다. JWT 서명 키는 없다. 로그인 토큰은 Amazon Cognito가 서명하고 Gateway는 공개 키(JWKS)로 검증하므로 공유할 비밀 키가 없다(2026-10-13 변경). User Pool ID와 앱 클라이언트 ID는 비밀이 아니므로 설정 값으로 둔다.
 

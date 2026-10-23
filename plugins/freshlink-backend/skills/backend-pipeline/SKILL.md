@@ -114,7 +114,7 @@ ok / 고칠 점 / 멈춰
 확인 ③에는 레포별로 브랜치 이름, 커밋 메시지, PR 대상 브랜치, 라벨을 미리 적어 보여 준다.
 
 - 기본: 레포마다 작업 브랜치(`feat/<기능ID>-<설명>`) → 커밋 → `git push -u origin <브랜치>` → `gh pr create --base dev`.
-- 레포 `CLAUDE.md`나 `.github`의 `CONTRIBUTING.md`가 다르게 정하면 그것을 따른다. **PR은 필수다.** 자기 레포라도 `main`·`dev`에 직접 push하지 않는다 (강제 push도 금지). 합치기는 사람이 CodeRabbit 지적이 없고 CI 빌드가 통과한 것을 보고 직접 한다.
+- 레포 `CLAUDE.md`나 `.github`의 `CONTRIBUTING.md`가 다르게 정하면 그것을 따른다. **PR은 필수다.** 자기 레포라도 `main`·`dev`에 직접 push하지 않는다 (강제 push도 금지). 합치기는 사람이 CI 빌드가 통과한 것을 보고 직접 한다 (CodeRabbit은 선택).
 - 커밋 메시지·PR 제목: `feat:`/`fix:`/`docs:` + 한국어 요약. PR 본문은 공통 PR 템플릿을 채운다. 쪽지 형식이 바뀌면 `message-spec` 라벨.
 - 레포 여러 개면 PR 본문에 서로의 PR 링크를 적고, 합치는 순서(common → 서비스 → gateway)를 적는다.
 - `gh`가 없거나 로그인이 안 되어 있으면 push까지만 하고 PR 만드는 링크를 알려 준다.

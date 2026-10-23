@@ -176,7 +176,7 @@ ok / 고칠 점 / 멈춰
 
 - 브랜치: `feat/<기능ID>-<설명>` (문서만이면 `docs/<설명>`)
 - PR 대상: 서비스 레포는 `dev`, `infra`·`.github`는 `main`. 레포 `CLAUDE.md`가 다르게 정하면 그것을 따른다
-- 내 레포도 PR로만 올린다 (`main`·`dev` 직접 push 금지). PR을 연 뒤 CodeRabbit 지적이 없고 CI 빌드가 통과하면 사람이 직접 합친다
+- 내 레포도 PR로만 올린다 (`main`·`dev` 직접 push 금지). PR을 연 뒤 CI 빌드가 통과하면 사람이 직접 합친다 (CodeRabbit은 선택)
 - `gh`(GitHub CLI)가 없거나 로그인이 안 되어 있으면 push까지만 하고 PR 만드는 링크를 알려 준다
 
 ### 중간에 끊겼을 때
