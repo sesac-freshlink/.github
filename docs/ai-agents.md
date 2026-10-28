@@ -1,21 +1,30 @@
-# Claude Code 팀 플러그인 사용법
+# Claude Code 팀 에이전트 사용법
 
-이 레포는 팀 공용 Claude Code 플러그인을 배포하는 마켓플레이스다. 전체 흐름 그림과 PM·에이전트·플러그인이 무엇인지는 [README의 "Claude Code PM 파이프라인"](../README.md#claude-code-pm-파이프라인)에 정리해 두었다.
+> **2026-10-28 변경:** 처음에는 이 레포를 Claude Code 플러그인 마켓플레이스로 쓰고 각자 플러그인을 설치했다. 간단한 명령도 30~40분씩 걸려서 **지금은 플러그인을 쓰지 않는다.** 에이전트 md 원본은 이 레포 `claude-agents/`에 두고, **각 레포의 `.claude/` 폴더에 복사해서** 쓴다. 이전에 플러그인을 설치했다면 지운다(2장 끝).
 
-| 플러그인 | 담당 | 쓰는 레포 | 시작 명령 |
+> **에이전트는 선택이다.** 에이전트·스킬·명령 md 파일을 레포에 넣어 쓰는 것은 필수가 아니다. 쓰지 않아도 되고, 레포에 복사하는 PR을 올리지 않아도 된다. 쓰고 싶은 사람·레포만 아래대로 복사한다.
+
+이 레포의 `claude-agents/`가 팀 공용 에이전트의 **원본**이다. 각 레포는 여기서 필요한 묶음을 복사해 자기 `.claude/`에 커밋한다. 전체 흐름 그림과 PM·에이전트가 무엇인지는 [README의 "Claude Code 에이전트"](../README.md#claude-code-에이전트)에 정리해 두었다.
+
+| 묶음 | 원본 위치 | 복사할 레포 | 시작 명령 |
 | --- | --- | --- | --- |
-| `freshlink-infra` | 김진아 | `infra`, `gitops`, `.github` 워크플로 | `/infra-pm 요청` |
-| `freshlink-backend` | 김진아 | `gateway`, `member-service`, `inventory-service`, `order-service`, `logistics-simulator`, `common` | `/backend-pm 요청` |
+| 백엔드 | `claude-agents/backend/` | `gateway`, `member-service`, `inventory-service`, `order-service`, `logistics-simulator`, `common` (2차에 `notification-service`) | `/backend-pm 요청` |
+| 인프라 | `claude-agents/infra/` | `infra`, `gitops` | `/infra-pm 요청` |
+| (필요한 것만) | 위 둘 중 골라서 | `frontend` (이미 자체 `.claude/agents/`가 있다), `.github` | |
+
+담당: 김진아(원본 관리). 레포에 넣을지는 그 레포 담당자가 정한다(넣지 않아도 된다).
 
 ## 한눈에 보기
 
-**에이전트에게 하나씩 시키지 않는다. 명령 한 줄로 PM에게 맡기고, 단계가 끝날 때마다 ok만 한다.**
+**빨리 끝내려면 에이전트 하나에게 직접 시킨다. 큰 기능만 PM에게 맡긴다.**
 
-```
-/backend-pm S-32 폐기 API 만들어줘. 다른 점포 lot은 403
-```
+| 일의 크기 | 쓰는 법 | 걸리는 시간 |
+| --- | --- | --- |
+| 값 하나, 오타, 작은 수정 | 에이전트 없이 그냥 Claude에게 부탁 | 가장 빠름 |
+| 리뷰만, 검증만, 설계만 | 에이전트 하나 (`backend-reviewer로 이 PR 리뷰해줘`) — 6장 | 빠름 |
+| 여러 레포에 걸친 새 기능 | PM (`/backend-pm 요청`) — 3장 | 에이전트를 최대 7개 차례로 부르므로 오래 걸린다 |
 
-이렇게 치면 Claude가 PM이 되어 아래처럼 흘러간다.
+PM에게 맡기면 이렇게 흘러간다.
 
 ```
 나: /backend-pm S-32 폐기 API 만들어줘
@@ -28,13 +37,11 @@ PM: ③ 이대로 커밋하고 PR 올릴까요?           ← 나: ok
 PM: 브랜치·커밋·push·PR → PR 링크와 사람이 할 일 보고
 ```
 
-내가 하는 일은 **처음 한 줄 요청과 ok 세 번**이다. 고칠 점이 있으면 ok 대신 고칠 점을 말한다.
-
 ## 0. 처음이라면: 어디서 쓰나
 
 **에이전트는 내 PC에서 여는 Claude Code 세션에서만 쓴다.**
 
-claude.ai의 프로젝트 채팅·스레드(웹 화면에서 대화하는 곳)에서는 `/plugin`, `/agents`, `/backend-pm` 같은 명령과 에이전트가 동작하지 않는다. 프로젝트 채팅은 계획을 세우거나 PR을 만들어 달라고 부탁하는 곳이고, 에이전트로 코드를 짜고 리뷰하는 일은 아래처럼 내 PC 세션을 열어서 한다.
+claude.ai의 프로젝트 채팅·스레드(웹 화면에서 대화하는 곳)에서는 `/agents`, `/backend-pm` 같은 명령과 에이전트가 동작하지 않는다. 프로젝트 채팅은 계획을 세우거나 PR을 만들어 달라고 부탁하는 곳이고, 에이전트로 코드를 짜고 리뷰하는 일은 아래처럼 내 PC 세션을 열어서 한다.
 
 ### 내 PC 세션 여는 법
 
@@ -43,7 +50,7 @@ claude.ai의 프로젝트 채팅·스레드(웹 화면에서 대화하는 곳)�
 1. **새 생성**(새 세션)을 누른다.
 2. 환경을 클라우드가 아닌 **내 PC**로 고른다.
 3. 작업할 레포 폴더를 고른다. 예: `C:\fresh-link\repos\inventory-service`
-4. 입력창에 `/backend-pm 요청 내용`을 친다.
+4. 입력창에 요청이나 `/backend-pm 요청 내용`을 친다.
 
 **B. 터미널 (cmd, PowerShell, Git Bash)**
 
@@ -52,63 +59,109 @@ cd C:\fresh-link\repos\inventory-service
 claude
 ```
 
-어느 쪽이든 **레포 폴더를 열고** 시작해야 그 레포의 `CLAUDE.md`(레포 규칙)를 같이 읽는다. 여러 레포에 걸친 작업이면 가장 많이 고칠 레포를 연다. PM이 옆 레포(`C:\fresh-link\repos\*`)도 같이 고친다.
+어느 쪽이든 **레포 폴더를 열고** 시작해야 그 레포의 `CLAUDE.md`(레포 규칙)와 `.claude/`(에이전트·명령·스킬)를 읽는다. 여러 레포에 걸친 작업이면 가장 많이 고칠 레포를 연다. PM이 옆 레포(`C:\fresh-link\repos\*`)도 같이 고친다.
 
 ### 준비됐는지 확인
 
-입력창에 `/`를 치면 명령 목록이 나온다. `/backend-pm`, `/infra-pm`이 보이면 준비 끝이다. 안 보이면 아래 2장 설치부터 한다.
+입력창에 `/agents`를 치면 그 레포의 에이전트 목록이 나온다. `/`를 치면 명령 목록에 `/backend-pm`(인프라 레포는 `/infra-pm`)이 보인다. 안 보이면 2장대로 그 레포에 복사했는지 본다.
 
 ## 1. 구조
 
+**원본 (`.github` 레포)**
+
 ```
 .github/
-├── .claude-plugin/
-│   └── marketplace.json              # 앱스토어 목록: 마켓플레이스 이름 "freshlink"
-└── plugins/
-    ├── freshlink-infra/              # 인프라 플러그인
-    │   ├── .claude-plugin/plugin.json
+└── claude-agents/
+    ├── backend/
     │   ├── agents/                   # 서브에이전트(직무 설명서) 7개
-    │   ├── skills/infra-pipeline/    # PM이 따르는 진행 순서와 확인 규칙
-    │   └── commands/                 # /infra-pm 외 명령 3개
-    └── freshlink-backend/            # 백엔드 플러그인
-        ├── .claude-plugin/plugin.json
+    │   ├── skills/backend-pipeline/  # PM이 따르는 진행 순서와 확인 규칙
+    │   └── commands/                 # /backend-pm 외 명령 3개
+    └── infra/
         ├── agents/                   # 서브에이전트 7개
-        ├── skills/backend-pipeline/  # PM이 따르는 진행 순서와 확인 규칙
-        └── commands/                 # /backend-pm 외 명령 3개
+        ├── skills/infra-pipeline/
+        └── commands/                 # /infra-pm 외 명령 3개
 ```
 
+**복사한 뒤 (각 레포)**
+
+```
+inventory-service/
+├── CLAUDE.md                         # 레포 규칙 (레포마다 다르다)
+└── .claude/
+    ├── agents/*.md                   # ← claude-agents/backend/agents/
+    ├── skills/backend-pipeline/SKILL.md
+    └── commands/*.md                 # ← claude-agents/backend/commands/
+```
+
+- Claude Code는 세션을 연 레포의 `.claude/agents/`, `.claude/skills/<이름>/SKILL.md`, `.claude/commands/*.md`를 자동으로 읽는다. 설치가 필요 없다.
+- 명령 이름은 파일 이름이다. `commands/backend-pm.md` → `/backend-pm`. 앞에 붙는 접두사가 없다.
 - **PM = 지금 대화하는 Claude(메인 세션)** 이다. 서브에이전트는 다른 서브에이전트를 부를 수 없어서, 일을 나눠 주는 역할은 메인 세션이 맡는다. `/infra-pm`, `/backend-pm` 명령이 메인 세션을 PM으로 만든다.
 - `infra-planner`, `backend-planner`는 요청을 정리하는 1단계 서브에이전트다. PM이 아니다.
-- 플러그인에는 `CLAUDE.md`를 넣을 수 없다. 레포마다 다른 규칙(브랜치, 검증 명령, 담당자)은 각 레포 루트의 `CLAUDE.md`에 둔다.
+- 레포마다 다른 규칙(브랜치, 검증 명령, 담당자)은 원본에 넣지 않고 각 레포 루트의 `CLAUDE.md`에 둔다.
 
-## 2. 설치·업데이트·확인
+## 2. 레포에 복사하기·갱신하기
 
-터미널(cmd, PowerShell)에서 한 번 실행한다. Claude Code 세션 안이 아니라 **일반 터미널**이다.
+### 처음 복사
+
+PowerShell에서 실행한다. `$repo`만 바꾸면 된다. 레포는 `C:\fresh-link\repos\` 아래에 나란히 받아 두었다고 본다.
+
+**백엔드 레포** (`gateway`, `member-service`, `inventory-service`, `order-service`, `logistics-simulator`, `common`)
+
+```powershell
+$repo = "inventory-service"
+$src  = "C:\fresh-link\repos\.github\claude-agents\backend"
+$dst  = "C:\fresh-link\repos\$repo\.claude"
+New-Item -ItemType Directory -Force "$dst\agents", "$dst\commands", "$dst\skills" | Out-Null
+Copy-Item "$src\agents\*.md"   "$dst\agents\"   -Force
+Copy-Item "$src\commands\*.md" "$dst\commands\" -Force
+Copy-Item "$src\skills\*"      "$dst\skills\"   -Recurse -Force
+```
+
+**인프라 레포** (`infra`, `gitops`)
+
+```powershell
+$repo = "infra"
+$src  = "C:\fresh-link\repos\.github\claude-agents\infra"
+$dst  = "C:\fresh-link\repos\$repo\.claude"
+New-Item -ItemType Directory -Force "$dst\agents", "$dst\commands", "$dst\skills" | Out-Null
+Copy-Item "$src\agents\*.md"   "$dst\agents\"   -Force
+Copy-Item "$src\commands\*.md" "$dst\commands\" -Force
+Copy-Item "$src\skills\*"      "$dst\skills\"   -Recurse -Force
+```
+
+복사한 뒤:
+
+1. 그 레포 `.gitignore`에 `_workspace*/`와 `.claude/settings.local.json`이 있는지 본다(에이전트 작업 파일과 개인 설정은 커밋하지 않는다).
+2. (선택) 작업 브랜치(`chore/claude-agents`)에서 `.claude/`를 커밋하고 PR로 올린다. 레포에 같이 두면 팀원 모두 같은 에이전트를 쓴다. 나만 쓸 거면 커밋하지 않고 내 PC에만 둬도 된다.
+3. 새 세션을 열고 `/agents`로 확인한다.
+
+`frontend`는 이미 자체 `.claude/agents/`(pm, architect, coder, reviewer 등)가 있다. 백엔드 묶음을 통째로 넣지 않고 필요한 파일만 고른다. 이름이 겹치면 frontend 것을 그대로 둔다.
+
+### 원본이 바뀌었을 때 (갱신 규칙)
+
+1. 에이전트를 고칠 때는 **`.github`의 `claude-agents/` 원본을 먼저 고친다**(7장). 각 레포 `.claude/`만 고치면 다음 복사 때 덮어써진다.
+2. 원본이 `main`에 합쳐지면, 에이전트를 쓰는 레포에서 `.github`를 `git pull`한 뒤 위 복사 명령을 다시 실행한다(레포에 커밋해 두었다면 PR로 올린다).
+3. 레포 하나에만 필요한 규칙은 `.claude/` 파일이 아니라 그 레포 `CLAUDE.md`에 쓴다. 그래야 복사할 때 지워지지 않는다.
+
+### 예전에 플러그인을 설치했다면
+
+일반 터미널에서 지운다. 남겨 두면 레포의 `.claude/` 명령과 이름이 겹친다.
 
 ```bash
-claude plugin marketplace add sesac-freshlink/.github
+claude plugin uninstall freshlink-backend@freshlink
 ```
 
 ```bash
-claude plugin install freshlink-backend@freshlink
+claude plugin uninstall freshlink-infra@freshlink
 ```
 
 ```bash
-claude plugin install freshlink-infra@freshlink
+claude plugin marketplace remove freshlink
 ```
-
-자기 일에 필요한 것만 깔아도 된다 (백엔드 담당은 `freshlink-backend`만).
-
-| 하고 싶은 것 | 터미널 | 세션 입력창 |
-| --- | --- | --- |
-| 설치된 플러그인 보기 | `claude plugin list` | `/plugin` |
-| 이 레포가 바뀐 뒤 반영 | `claude plugin marketplace update freshlink` | `/plugin marketplace update freshlink` |
-| 에이전트 목록 보기 | — | `/agents` 또는 "쓸 수 있는 에이전트 목록 알려줘" |
-| 삭제 | `claude plugin uninstall freshlink-backend@freshlink` | `/plugin uninstall freshlink-backend@freshlink` |
-
-설치는 내 컴퓨터의 Claude Code에만 적용된다. 팀원이 각자 설치해야 한다. 설치하거나 업데이트한 뒤에는 **새 세션을 연다** (이미 열린 세션에는 바로 안 보일 수 있다).
 
 ## 3. PM에게 맡기기
+
+PM은 에이전트를 최대 7개 차례로 부르므로 **오래 걸린다.** 여러 레포에 걸친 새 기능처럼 큰 일에만 쓴다. 작은 일은 6장처럼 에이전트 하나에게 시키거나 그냥 Claude에게 부탁한다.
 
 ### 시작
 
@@ -185,9 +238,9 @@ ok / 고칠 점 / 멈춰
 
 ### 작은 일
 
-값 하나, 오타처럼 작은 수정은 PM이 계획 단계를 건너뛰고 직접 고친 뒤 검증만 돌린다. 그래도 커밋 전에는 묻는다.
+값 하나, 오타처럼 작은 수정은 PM이 계획 단계를 건너뛰고 직접 고친 뒤 검증만 돌린다. 그래도 커밋 전에는 묻는다. 처음부터 PM 없이 부탁하는 편이 더 빠르다.
 
-## 4. freshlink-backend
+## 4. 백엔드 묶음 (`claude-agents/backend`)
 
 ### 서브에이전트
 
@@ -198,8 +251,8 @@ PM이 알아서 부르므로 이름을 외울 필요는 없다. 확인 메시지
 | `backend-planner` | opus | 요청 → 기능 ID·범위·수용 기준·영향 레포·담당자·쪽지 영향 정리 | `01_brief.md` |
 | `backend-architect` | opus | API 계약, 엔티티·테이블, 쪽지 흐름·멱등·Outbox, gateway 규칙, 테스트 계획, 레포 순서 | `02_architect_design.md` |
 | `common-coder` | sonnet | 쪽지 DTO, Outbox 발행기, 멱등 처리, 버전 관리 | `03_common_summary.md` |
-| `service-coder` | sonnet | member·inventory·order·logistics-simulator 코드와 테스트 (레포 하나씩) | `03_<레포>_summary.md` |
-| `gateway-coder` | sonnet | gateway 라우팅, Cognito 토큰 검증(JWKS·aud), OWNER 확인, 위조 헤더 제거·헤더 주입 | `03_gateway_summary.md` |
+| `service-coder` | sonnet | member·inventory·order·logistics-simulator·notification(2차) 코드와 테스트 (레포 하나씩) | `03_<레포>_summary.md` |
+| `gateway-coder` | sonnet | gateway 라우팅, Cognito 토큰 검증(JWKS·aud), OWNER 확인, 위조 헤더 제거·헤더 주입, 2차 BFF(`/api/auth/**`·쿠키) | `03_gateway_summary.md` |
 | `backend-verifier` | sonnet | `./gradlew build`(테스트 포함), 정적 검사, 비밀값·금지 패턴 검색 | `04_verify_report.md` |
 | `backend-reviewer` | opus | 인증·권한, 재고 정합성(FIFO·멱등·Outbox·Saga), API 계약, 운영 리뷰 | `05_reviewer_report.md` |
 
@@ -207,15 +260,15 @@ PM이 알아서 부르므로 이름을 외울 필요는 없다. 확인 메시지
 planner → architect → ① → common-coder → service-coder(레포별) → gateway-coder → verifier → ② → reviewer → 문서 반영 → ③ → 커밋·PR
 ```
 
-해당 레포가 없으면 그 coder는 건너뛴다. 진행 규칙 전체는 `plugins/freshlink-backend/skills/backend-pipeline/SKILL.md`에 있다.
+해당 레포가 없으면 그 coder는 건너뛴다. 진행 규칙 전체는 `claude-agents/backend/skills/backend-pipeline/SKILL.md`(복사한 레포에서는 `.claude/skills/backend-pipeline/SKILL.md`)에 있다.
 
 ### 에이전트가 따르는 팀 결정
 
-- 로그인은 Amazon Cognito. 프론트가 ID 토큰을 보내고 **gateway만** 토큰을 검증한다(JWKS, RS256, `aud`). 역할은 `cognito:groups`, 점포는 `custom:storeId`. gateway가 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘기고, 서비스는 토큰을 다시 검증하지 않는다.
+- 로그인은 Amazon Cognito. 프론트가 ID 토큰을 보내고 **gateway만** 토큰을 검증한다(JWKS, RS256, `aud`). 역할은 `cognito:groups`, 점포는 `custom:storeId`. gateway가 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘기고, 서비스는 토큰을 다시 검증하지 않는다. 2026-10-28에 BFF 전환을 정했다(gateway가 `/api/auth/**`로 로그인을 대신하고 토큰은 HttpOnly 쿠키).
 - 재고를 바꾸는 일은 전부 `inventory-commands.fifo` 쪽지로. Outbox와 멱등 처리는 common을 쓴다.
 - 실시간 재고는 점주 화면이 **3초마다** `GET /owner/inventory`를 조회하는 폴링이다.
 - 세 서비스(member·order·inventory) 모두 RDS MySQL + Flyway다. 주문 저장소도 MySQL로 확정했다(10/15). 주문과 outbox를 한 트랜잭션에 넣어야 하기 때문이다.
-- 배포(GitHub Actions → ECR → gitops → ArgoCD)와 관측성 설정(gitops)은 `freshlink-infra` 몫이다. 백엔드 PM은 필요한 환경 변수·권한을 "freshlink-infra로 할 일"로 알려 준다.
+- 배포(GitHub Actions → ECR → gitops → ArgoCD)와 관측성 설정(gitops)은 인프라 에이전트 몫이다. 백엔드 PM은 필요한 환경 변수·권한을 "인프라 쪽 할 일"로 알려 준다.
 
 ### 절대 하지 않는 것
 
@@ -238,7 +291,7 @@ planner → architect → ① → common-coder → service-coder(레포별) → 
 
 JDK 21과 각 레포의 Gradle Wrapper(`./gradlew`)가 필요하다. 레포가 아직 뼈대(빌드 파일 없음)면 verifier는 빌드 게이트를 "미실행"으로 적는다. Testcontainers(MySQL) 테스트는 Docker Desktop이 켜져 있을 때만 돈다. SQS는 목으로 시험한다.
 
-## 5. freshlink-infra
+## 5. 인프라 묶음 (`claude-agents/infra`)
 
 ### 서브에이전트
 
@@ -256,7 +309,7 @@ JDK 21과 각 레포의 Gradle Wrapper(`./gradlew`)가 필요하다. 레포가 �
 planner → architect → ① → coder(iac / gitops / pipeline 중 해당하는 것) → verifier → ② → reviewer → 문서 반영 → ③ → 커밋·PR
 ```
 
-진행 규칙 전체는 `plugins/freshlink-infra/skills/infra-pipeline/SKILL.md`에 있다.
+진행 규칙 전체는 `claude-agents/infra/skills/infra-pipeline/SKILL.md`(복사한 레포에서는 `.claude/skills/infra-pipeline/SKILL.md`)에 있다.
 
 ### 절대 하지 않는 것
 
@@ -276,15 +329,13 @@ planner → architect → ① → coder(iac / gitops / pipeline 중 해당하는
 | `/plan-summary [파일]` | `terraform plan` 결과를 PR 본문용 표로 요약 (삭제·교체 리소스를 맨 위에) |
 | `/cost-check [브랜치]` | 변경분의 월 AWS 비용 영향 추정 |
 
-다른 플러그인의 명령과 이름이 겹치면 `/freshlink-infra:reread`처럼 플러그인 이름을 앞에 붙인다.
-
 ### 검증 도구
 
 verifier는 아래 도구가 있으면 실행하고, 없으면 "미실행"으로 적는다 (자동으로 설치하지 않는다).
 
 `terraform`, `tflint`, `trivy`(또는 `checkov`), `helm`, `kubeconform`, `actionlint`
 
-## 6. 에이전트 하나만 쓰기
+## 6. 에이전트 하나만 쓰기 (빠른 방법)
 
 PM 없이 한 가지 일만 시키고 싶을 때는 에이전트 이름을 넣어 부탁한다. 입력창에 `@`를 치면 에이전트 목록이 나온다.
 
@@ -293,32 +344,30 @@ PM 없이 한 가지 일만 시키고 싶을 때는 에이전트 이름을 넣�
 | PR 리뷰만 | `backend-reviewer로 inventory-service #14 리뷰해줘` / `infra-reviewer로 이 PR 리뷰해줘` |
 | 검증만 | `backend-verifier로 지금 변경분 검증해줘` / `infra-verifier로 gitops 차트 렌더링 확인해줘` |
 | 설계만 보고 싶다 | `backend-architect로 E-02 주문 Saga 상태 전이 설계해줘` |
+| 코드 하나만 | `service-coder로 order-service에 주문 취소 API 만들어줘` |
 
 혼자 부를 때는 앞 단계 산출물이 없을 수 있으니 무엇을 보면 되는지(레포, 파일, PR 번호, 기능 ID)를 같이 말한다.
 
 ## 7. 에이전트 고치기·추가하기
 
-1. 이 레포에서 `chore/<설명>` 브랜치를 딴다 (`main`에 바로 push하지 않고 PR로 합친다).
+1. 이 레포(`.github`)에서 `chore/<설명>` 브랜치를 딴다 (`main`에 바로 push하지 않고 PR로 합친다).
 2. 고칠 곳을 고른다.
-   - 단계 순서, 확인을 언제 묻는지, PM이 알아서 할 일 → `plugins/<플러그인>/skills/*-pipeline/SKILL.md`
-   - 특정 에이전트가 반복하는 실수 → `plugins/<플러그인>/agents/<이름>.md`의 "작업 원칙"에 한 줄
+   - 단계 순서, 확인을 언제 묻는지, PM이 알아서 할 일 → `claude-agents/<묶음>/skills/*-pipeline/SKILL.md`
+   - 특정 에이전트가 반복하는 실수 → `claude-agents/<묶음>/agents/<이름>.md`의 "작업 원칙"에 한 줄
    - 레포 하나에만 해당하는 규칙 → 그 레포의 `CLAUDE.md`
 3. 새 에이전트는 `agents/`에 파일을 만든다. 맨 위 `name`, `description`, `model`이 필요하다. 파이프라인 스킬의 단계 표에도 한 줄 추가해야 PM이 부른다.
-4. 크게 바꿨으면 `plugin.json`의 `version`을 올린다.
-5. 확인: `claude plugin validate .` 와 `claude plugin validate plugins/<플러그인>`
-6. 합친 뒤 각자 `claude plugin marketplace update freshlink`, 새 세션.
-
-새 플러그인을 만들려면 `plugins/` 아래에 폴더를 만들고 `.claude-plugin/marketplace.json`의 `plugins` 목록에 한 줄 추가한다.
+4. 합친 뒤 에이전트를 쓰는 레포는 2장 복사 명령을 다시 실행한다(레포에 커밋해 두었다면 PR로). 팀 채널에 "에이전트 원본이 바뀌었다"고 한 줄 알린다.
 
 ## 8. 자주 막히는 것
 
 | 증상 | 해결 |
 | --- | --- |
-| 프로젝트 채팅에서 `/plugin`, `/backend-pm`이 안 된다 | 정상이다. 내 PC 세션(0장)에서 쓴다 |
-| `/backend-pm`이 명령 목록에 없다 | `claude plugin marketplace update freshlink` → 새 세션. 그래도 없으면 `claude plugin list`로 설치 확인 → 2장 |
-| `backend-pm` 에이전트가 없어졌다 | 이름이 `backend-planner`로 바뀌었다 (인프라는 `infra-planner`). PM은 이제 명령(`/backend-pm`)이다 |
+| 프로젝트 채팅에서 `/backend-pm`이 안 된다 | 정상이다. 내 PC 세션(0장)에서 쓴다 |
+| `/backend-pm`이 명령 목록에 없다 | 그 레포에 `.claude/commands/backend-pm.md`가 있는지 본다. 없으면 2장대로 복사. 있으면 레포 폴더를 열고 새 세션을 연다 |
+| `/agents`에 에이전트가 없다 | `.claude/agents/*.md`가 있는지, 세션을 그 레포 폴더에서 열었는지 본다 |
+| 명령이 두 개씩 보이거나 `freshlink-backend:`가 붙은 명령이 보인다 | 예전 플러그인이 남아 있다. 2장 끝의 명령으로 지운다 |
+| PM이 너무 오래 걸린다 | 정상이다(에이전트 여러 개를 차례로 부른다). 작은 일은 6장처럼 에이전트 하나에게, 또는 그냥 Claude에게 부탁한다 |
 | PM이 확인 없이 계속 간다 / 매번 묻는다 | `/backend-reread`(인프라 `/reread`)로 스킬을 다시 읽게 한다 |
 | PM이 에이전트를 안 쓰고 직접 코드를 짠다 | "backend-pipeline 스킬대로 서브에이전트에게 맡겨"라고 말한다 |
-| 팀원이 고친 에이전트가 반영 안 된다 | `claude plugin marketplace update freshlink` 후 새 세션 |
+| 팀원이 고친 에이전트가 반영 안 된다 | `.github`를 `git pull`하고 2장 복사 명령을 다시 실행한 뒤 새 세션 |
 | 에이전트가 레포 규칙을 무시한다 | 레포 폴더를 열고 세션을 시작했는지 확인, `/backend-reread` 또는 `/reread` |
-| 명령 이름이 겹친다 | `/freshlink-backend:backend-pm`처럼 플러그인 이름을 붙인다 |

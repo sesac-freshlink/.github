@@ -30,7 +30,7 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 | 재고 변경 | 전부 `inventory-commands.fifo`(그룹 = storeId) 경유. Outbox + `processed_message` 멱등 (common) |
 | 실시간 재고 | 점주 화면이 3초마다 `GET /owner/inventory` 조회 (폴링) |
 | 주문 저장소 | **MySQL 확정**(10/15). 세 서비스 모두 RDS MySQL + Flyway. 주문과 outbox를 한 트랜잭션에 넣는다 |
-| 배포 | GitHub Actions(`.github` 재사용 워크플로) → ECR → gitops 이미지 태그 커밋 → ArgoCD → EKS. 백엔드 에이전트는 gitops·infra를 고치지 않는다 (`freshlink-infra` 몫) |
+| 배포 | GitHub Actions(`.github` 재사용 워크플로) → ECR → gitops 이미지 태그 커밋 → ArgoCD → EKS. 백엔드 에이전트는 gitops·infra를 고치지 않는다 (인프라 에이전트 몫) |
 | 관측성 | Actuator·Micrometer → Prometheus(앱 포트의 `/actuator/prometheus`, 관리 포트 없음. 모든 서비스 8080(dev·prod 같음), 서비스끼리는 `http://<레포>:8080`. gateway는 외부 `/actuator` 차단), Micrometer Tracing → Zipkin, JSON 로그(traceId) → Loki |
 
 ## 단계와 확인
@@ -78,7 +78,7 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 - 브리프·설계의 **미확정** 질문 (예: 주문 저장소) — 확인 ①에 함께 올린다
 - **담당자가 다른 레포**(사용자 본인이 아닌 CODEOWNERS)를 고쳐야 할 때 — 확인 ①에 담당자 이름과 함께 적는다
 - 쪽지 형식 변경 — 확인 ①에 적는다 (`message-spec` 라벨, 이태우·김경우 알림 필요)
-- gitops values(환경 변수·IRSA)·infra(큐·IAM)가 필요할 때 — 직접 고치지 않고 확인 ①과 최종 보고에 "freshlink-infra로 할 일"로 적는다
+- gitops values(환경 변수·IRSA)·infra(큐·IAM)가 필요할 때 — 직접 고치지 않고 확인 ①과 최종 보고에 "인프라 쪽 할 일(infra·gitops)"로 적는다
 
 ## 확인 메시지 형식
 
@@ -124,7 +124,7 @@ ok / 고칠 점 / 멈춰
 
 - PR 링크 (레포별, 합치는 순서대로)
 - 다른 담당자에게 알릴 것 (남의 레포 PR, 쪽지 형식 변경)
-- freshlink-infra로 할 일 (환경 변수, 큐, IAM)
+- 인프라 쪽 할 일 (환경 변수, 큐, IAM)
 - 프론트 영향 (응답 필드가 바뀌었으면 frontend `api.ts`·MSW 수정 필요)
 
 ## 이어서 하기

@@ -21,8 +21,8 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`docs/architecture/`](docs/architecture) | 아키텍처 구조도(PNG·SVG)와 번호별 흐름 설명, 구조도 계획([`구조도-계획.md`](docs/architecture/구조도-계획.md))과 생성 스크립트 |
 | [`docs/프로젝트-보드-사용법.md`](docs/프로젝트-보드-사용법.md) | 프로젝트 보드·이슈·브랜치·커밋 연동 사용법 |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | 브랜치·커밋·PR·라벨 규칙 |
-| [`.claude-plugin/`](.claude-plugin), [`plugins/`](plugins) | 팀 공용 Claude Code 플러그인. **PM에게 한 줄로 맡기면 계획부터 PR까지 진행된다.** 아래 [Claude Code PM 파이프라인](#claude-code-pm-파이프라인) 참고 |
-| [`docs/ai-agents.md`](docs/ai-agents.md) | 플러그인 설치, PM에게 맡기는 법, 에이전트별 역할, 수정 방법 |
+| [`claude-agents/`](claude-agents) | 팀 공용 Claude Code 에이전트·스킬·명령 md **원본**. 쓰고 싶은 레포의 `.claude/`에 복사해서 쓴다(선택). 아래 [Claude Code 에이전트](#claude-code-에이전트) 참고 |
+| [`docs/ai-agents.md`](docs/ai-agents.md) | 각 레포에 복사하는 법, PM에게 맡기는 법, 에이전트별 역할, 수정 방법 |
 
 재사용 워크플로 `.github/workflows/spring-build.yml`(각 서비스 레포가 몇 줄로 불러 쓴다). 2차에 배포 성공·실패 알림 웹훅 단계를 더한다(2026-10-28).
 
@@ -31,18 +31,37 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 
 ---
 
-## Claude Code PM 파이프라인
+## Claude Code 에이전트
 
-> **PM에게 한 줄로 맡기면, 그다음은 PM이 알아서 끝까지 진행한다.**
-> 나는 단계가 끝날 때마다 "이대로 진행할까요?"에 **ok만 하면 된다.**
+> **선택이다.** 에이전트·스킬·명령 md 파일을 레포에 넣어 쓰는 것은 필수가 아니다. 쓰지 않아도 되고, 레포에 복사하는 PR을 올리지 않아도 된다.
+>
+> **2026-10-28 변경:** 처음에는 이 레포를 플러그인 마켓플레이스로 쓰고 각자 플러그인을 설치했지만, 간단한 명령도 30~40분씩 걸려서 **지금은 플러그인을 쓰지 않는다.** 에이전트 md 원본은 [`claude-agents/`](claude-agents)에 두고, 쓰고 싶은 레포의 `.claude/` 폴더에 복사해서 쓴다.
 
-```
-/backend-pm S-32 폐기 API 만들어줘. 다른 점포 lot은 403
-```
+### 어떻게 쓰나
 
-이 한 줄을 치면 지금 대화하는 Claude가 **PM**이 된다. PM은 직접 코드를 짜지 않고, 역할이 정해진 에이전트(직원)들에게 일을 나눠 시키고 결과를 점검한다.
+| 묶음 | 원본 | 복사할 레포 | 시작 명령 |
+| --- | --- | --- | --- |
+| 백엔드 | `claude-agents/backend/{agents,skills,commands}` | `gateway`, `member-service`, `inventory-service`, `order-service`, `logistics-simulator`, `common` (2차에 `notification-service`) | `/backend-pm 요청` |
+| 인프라 | `claude-agents/infra/{agents,skills,commands}` | `infra`, `gitops` | `/infra-pm 요청` |
+| 필요한 것만 | 위에서 골라서 | `frontend`(이미 자체 `.claude/agents/`가 있다), `.github` | |
 
-### 전체 흐름
+1. 레포 루트의 `.claude/agents/`, `.claude/skills/<이름>/`, `.claude/commands/`에 복사한다(PowerShell 명령은 [`docs/ai-agents.md`](docs/ai-agents.md) 2장).
+2. 그 레포 폴더에서 Claude Code 세션을 연다(데스크톱 앱에서 환경 **내 PC** + 레포 폴더, 또는 터미널에서 `claude`).
+3. `/agents`로 목록을 확인하고, 에이전트 이름으로 부탁하거나 `/backend-pm 요청`처럼 명령을 쓴다. 명령 앞에 접두사는 붙지 않는다.
+
+**빨리 끝내려면 에이전트 하나에게 직접 시킨다.** `/backend-pm`·`/infra-pm`(PM)은 에이전트를 최대 7개 차례로 불러 오래 걸리므로 여러 레포에 걸친 큰 기능에만 쓴다.
+
+| 일의 크기 | 쓰는 법 |
+| --- | --- |
+| 작은 수정 | 에이전트 없이 그냥 Claude에게 부탁 |
+| 리뷰·검증·설계 하나 | `backend-reviewer로 inventory-service #14 리뷰해줘` |
+| 큰 기능 | `/backend-pm S-32 폐기 API 만들어줘` → 단계마다 ok |
+
+> claude.ai 프로젝트 채팅·스레드에서는 `/agents`·`/backend-pm`이 동작하지 않는다. **내 PC에서 여는 Claude Code 세션**에서 쓴다.
+>
+> 원본이 바뀌면 `.github`를 `git pull`하고 같은 복사 명령을 다시 실행한다. 레포 하나에만 필요한 규칙은 `.claude/` 파일이 아니라 그 레포 `CLAUDE.md`에 쓴다.
+
+### PM 흐름 (큰 기능)
 
 ```mermaid
 flowchart TB
@@ -76,68 +95,25 @@ flowchart TB
     class REQ,G1,G2,G3 me
 ```
 
-- **초록색 칸(요청 한 줄, ①②③)만 내 차례다.** 나머지 칸은 전부 PM이 묻지 않고 진행한다.
-- 점선은 PM이 알아서 도는 고치기 반복이다. 같은 문제로 3번 넘게 막힐 때만 멈추고 묻는다.
-- 고칠 점이 있으면 ok 대신 고칠 점을 말한다. PM이 그 부분만 고치게 하고 같은 확인을 다시 보여 준다.
+- **초록색 칸(요청 한 줄, ①②③)만 내 차례다.** 나머지 칸은 PM이 묻지 않고 진행한다.
+- 고칠 점이 있으면 ok 대신 고칠 점을 말한다. **"끝까지 쭉"**이라고 답하면 ①②를 건너뛴다(커밋 전 ③은 그래도 묻는다).
 
-### 누가 무엇을 하나
-
-| | 🙋 내가 하는 일 | 🤖 PM이 알아서 하는 일 |
+| 묶음 | 시작 명령 | PM이 부리는 에이전트 (7개) |
 | --- | --- | --- |
-| 시작 | `/backend-pm 요청` 또는 `/infra-pm 요청` 한 줄 | 요청 원문 저장, 작업 폴더(`_workspace/`) 준비 |
-| 1단계 계획 | ① 계획 요약 보고 **ok**, 미확정 질문에 답 | planner·architect에게 시키고 빠진 것이 없는지 점검 |
-| 2단계 구현·검증 | ② 검증 결과 보고 **ok** | 레포별 coder에게 구현 → verifier로 빌드·테스트 → 실패하면 coder에게 되돌려 고침 |
-| 3단계 리뷰 | ③ 리뷰 결과와 커밋 계획 보고 **ok** | reviewer 리뷰 → 지적은 coder가 고치고 다시 검증·리뷰 → README 등 문서 반영 |
-| 4단계 커밋·PR | (없음) | 작업 브랜치·커밋·push·PR, PR 링크와 사람이 할 일 보고 |
+| 백엔드 | `/backend-pm` | backend-planner, backend-architect, common-coder, service-coder, gateway-coder, backend-verifier, backend-reviewer |
+| 인프라 | `/infra-pm` | infra-planner, infra-architect, iac-coder, gitops-coder, pipeline-coder, infra-verifier, infra-reviewer |
 
-**"끝까지 쭉"**이라고 답하면 ①②도 건너뛴다. 단, 커밋 전 ③과 사람만 정할 수 있는 것(미확정 사항, 남의 레포 수정, 비용 증가, `terraform plan` 실행)은 그래도 묻는다.
+담당: 김진아(원본 관리). 복사 명령, 에이전트별 역할, 에이전트 하나만 쓰는 법, 고치는 법, 막힐 때 해결법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
 
-### 시작하기 (3단계)
+### 쉽게 이해하기
 
-**1. 설치 (한 번만).** 일반 터미널(cmd, PowerShell)에서 실행한다. 필요한 플러그인만 깔아도 된다.
-
-```bash
-claude plugin marketplace add sesac-freshlink/.github
-claude plugin install freshlink-backend@freshlink
-claude plugin install freshlink-infra@freshlink
-```
-
-**2. 레포 폴더에서 내 PC 세션 열기.** Claude 데스크톱 앱에서 새 생성 → 환경을 클라우드가 아닌 **내 PC**로 → 레포 폴더(예: `C:\fresh-link\repos\inventory-service`)를 고른다. 터미널이면 그 폴더에서 `claude`를 실행한다.
-
-**3. PM에게 맡기기.**
-
-| 작업 | 명령 | 예 |
+| 비유 | 실제 | 위치 |
 | --- | --- | --- |
-| 백엔드 (gateway, 서비스 4개, common) | `/backend-pm <요청>` | `/backend-pm U-21 주문 생성 API 만들어줘` |
-| 인프라 (infra, gitops, 워크플로) | `/infra-pm <요청>` | `/infra-pm SQS DLQ 알림 추가해줘` |
-| 끊긴 작업 이어 하기 | `/backend-pm 이어서` | 마지막으로 끝난 단계 다음부터 다시 시작 |
-
-> claude.ai 프로젝트 채팅·스레드에서는 `/backend-pm` 같은 명령이 동작하지 않는다. 반드시 **내 PC에서 여는 Claude Code 세션**에서 쓴다.
->
-> 이 레포가 바뀌면 `claude plugin marketplace update freshlink`를 한 번 실행하고 새 세션을 연다.
-
-### 지금 있는 플러그인
-
-| 플러그인 | 시작 명령 | PM이 부리는 에이전트 (7개) |
-| --- | --- | --- |
-| `freshlink-backend` | `/backend-pm` | backend-planner, backend-architect, common-coder, service-coder, gateway-coder, backend-verifier, backend-reviewer |
-| `freshlink-infra` | `/infra-pm` | infra-planner, infra-architect, iac-coder, gitops-coder, pipeline-coder, infra-verifier, infra-reviewer |
-
-담당: 김진아. 확인 메시지 모양, 에이전트별 역할, 에이전트 하나만 쓰는 법, 막힐 때 해결법은 [`docs/ai-agents.md`](docs/ai-agents.md)에 있다.
-
----
-
-## 에이전트·플러그인 쉽게 이해하기
-
-| 비유 | 실제 | 이 레포의 위치 |
-| --- | --- | --- |
-| 팀장 | **PM** = 지금 대화하는 Claude(메인 세션). `/backend-pm`, `/infra-pm`으로 시작 | `plugins/<플러그인>/commands/*-pm.md` |
-| 팀장의 업무 매뉴얼 | 파이프라인 스킬 (단계 순서, 언제 확인받을지) | `plugins/<플러그인>/skills/*-pipeline/SKILL.md` |
-| 직무 설명서 | 에이전트 정의 (`.md` 파일 한 장 = 직원 한 명) | `plugins/<플러그인>/agents/*.md` |
-| 앱 | 플러그인 (팀장 매뉴얼 + 직원 설명서 묶음) | `plugins/<플러그인>/` |
-| 앱스토어 | 마켓플레이스 | `.claude-plugin/marketplace.json` |
+| 팀장 | **PM** = 지금 대화하는 Claude(메인 세션). `/backend-pm`, `/infra-pm`으로 시작 | `.claude/commands/*-pm.md` |
+| 팀장의 업무 매뉴얼 | 파이프라인 스킬 (단계 순서, 언제 확인받을지) | `.claude/skills/*-pipeline/SKILL.md` |
+| 직무 설명서 | 에이전트 정의 (`.md` 파일 한 장 = 직원 한 명) | `.claude/agents/*.md` |
+| 원본 보관소 | 이 레포 | `claude-agents/<묶음>/` |
 
 - **에이전트(서브에이전트)**: `reviewer.md` 같은 파일에 "너는 리뷰만 해, 이런 걸 잡아내"라고 적어 두면, 그 설명서대로 일하는 Claude 직원이 생긴다. frontend 레포의 `.claude/agents/`(pm, architect, coder, reviewer 등 8개)도 같은 것이다.
 - **왜 PM이 메인 세션인가**: 에이전트는 다른 에이전트를 부를 수 없다. 그래서 일을 나눠 주는 팀장 역할은 나와 대화하는 메인 Claude가 맡는다. `backend-planner`처럼 이름에 planner가 붙은 에이전트는 요청을 정리하는 직원일 뿐 PM이 아니다.
-- **왜 플러그인인가**: Claude는 지금 열린 레포의 `.claude/agents/`만 읽는다. 인프라·백엔드처럼 여러 레포를 오가는 일은 설명서를 레포마다 복사해야 한다. 플러그인은 레포가 아니라 **내 Claude Code 자체에** 깔려서, 어느 레포를 열어도 같은 팀장과 직원들이 보인다.
-- **왜 이 레포가 앱스토어인가**: GitHub 레포에 목록 파일(`.claude-plugin/marketplace.json`)만 넣으면 그 레포가 마켓플레이스가 된다. 우리는 이 `.github` 레포를 쓴다.
+- **왜 레포마다 복사하나**: Claude Code는 세션을 연 레포의 `.claude/`를 자동으로 읽어서 설치가 필요 없다. 원본은 여기 한 곳에 두고 쓰는 레포에만 복사한다.

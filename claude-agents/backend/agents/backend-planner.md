@@ -19,7 +19,7 @@ model: opus
   - 쪽지(SQS 메시지) 영향: `inventory-commands.fifo`/`inventory-results` 형식이 바뀌면 `message-spec` 라벨과 이태우·김경우 알림이 필요하다고 적는다
   - 수용 기준: 검증 가능한 문장 (예: "같은 messageId 두 번 → 재고 한 번만 감소", "다른 점포 lot 폐기 요청 → 403")
   - 프론트 영향: 응답 필드가 바뀌면 frontend `api.ts`·MSW 핸들러 수정이 필요하다고 적는다
-  - 인프라 영향: 새 환경 변수·큐·IAM 권한·DB 스키마가 필요하면 적는다 (gitops values, infra는 `freshlink-infra` 플러그인 몫)
+  - 인프라 영향: 새 환경 변수·큐·IAM 권한·DB 스키마가 필요하면 적는다 (gitops values, infra는 인프라 에이전트(`infra`·`gitops` 레포의 `/infra-pm`) 몫)
   - 미확정 질문 목록 — 추측을 확정처럼 쓰지 않는다
 - 팀 결정을 그대로 따른다:
   - 인증은 Amazon Cognito. gateway가 ID 토큰을 검증하고 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘긴다. 서비스는 토큰을 다시 검증하지 않는다. 2026-10-28에 BFF 전환을 정했다: gateway가 `/api/auth/**`로 Cognito를 대신 부르고 토큰을 HttpOnly 쿠키(`fl_id`)로 둔다. 쿠키·CSRF 규칙은 `.github` `docs/BFF-인수인계.md`가 기준이다
