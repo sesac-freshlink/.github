@@ -1,0 +1,111 @@
+# 배포·작업 결과를 디스코드(또는 슬랙) 채널에 보낸다 (2026-10-28, 2차 배포 실패 대응).
+# 웹훅 URL은 조직 비밀 DEPLOY_WEBHOOK_URL. 주소가 hooks.slack.com이면 슬랙 형식, 그 밖은 디스코드 형식으로 보낸다.
+# 부르는 쪽(작업 마지막 단계):
+#   - name: 알림
+#     if: always()
+#     uses: sesac-freshlink/.github/actions/notify@main
+#     with:
+#       webhook-url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+#       status: ${{ job.status }}
+#       title: "gateway dev 배포"
+# 실패면 실패한 단계 이름과 오류 메시지(::error 등 annotation, 최대 3개)를 붙인다.
+# 알림이 실패해도(웹훅 없음·전송 오류) 작업 결과는 바꾸지 않는다.
+name: notify
+description: "작업 결과(성공·실패·취소)를 웹훅으로 보낸다"
+
+inputs:
+  webhook-url:
+    description: "디스코드·슬랙 웹훅 URL (secrets.DEPLOY_WEBHOOK_URL). 비면 보내지 않는다"
+    required: false
+    default: ""
+  status:
+    description: "job.status (success, failure, cancelled) 또는 skipped"
+    required: true
+  title:
+    description: "무엇을 했는지. 예: gateway dev 배포, dev 클러스터 nat-on"
+    required: true
+  commit:
+    description: "커밋. 비면 github.sha. 앞 7자리만 보인다"
+    required: false
+    default: ""
+  details:
+    description: "덧붙일 한 줄 (선택)"
+    required: false
+    default: ""
+  github-token:
+    description: "실패 원인(실패한 단계·오류 메시지)을 읽는 토큰. 레포가 공개라 따로 권한을 주지 않아도 읽힌다"
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: 웹훅 보내기
+      shell: bash
+      env:
+        WEBHOOK_URL: ${{ inputs.webhook-url }}
+        STATUS: ${{ inputs.status }}
+        TITLE: ${{ inputs.title }}
+        COMMIT: ${{ inputs.commit || github.sha }}
+        DETAILS: ${{ inputs.details }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        REPO: ${{ github.repository }}
+        EVENT: ${{ github.event_name }}
+        ACTOR: ${{ github.actor }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_ATTEMPT: ${{ github.run_attempt }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        if [ -z "$WEBHOOK_URL" ]; then
+          echo "::warning::DEPLOY_WEBHOOK_URL 비밀이 없어 알림을 건너뛴다"
+          exit 0
+        fi
+        case "$STATUS" in
+          success)   mark="✅ 성공" ;;
+          failure)   mark="❌ 실패" ;;
+          cancelled) mark="⚪ 취소" ;;
+          skipped)   mark="⏭️ 건너뜀" ;;
+          *)         mark="❔ ${STATUS}" ;;
+        esac
+        case "$EVENT" in
+          schedule) who="예약" ;;
+          *)        who="${ACTOR} (${EVENT})" ;;
+        esac
+        line="${REPO#*/} · ${COMMIT:0:7} · ${who}"
+        [ -n "$DETAILS" ] && line="${line}"$'\n'"${DETAILS}"
+
+        # 실패면 이 작업에서 실패한 단계 이름과 오류 메시지(::error 등 annotation)를 붙인다.
+        # 이 러너가 돌리는 작업을 Jobs API에서 찾는다. 못 읽으면 실행 링크만 보낸다.
+        if [ "$STATUS" = failure ]; then
+          reason=""
+          job=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/attempts/${RUN_ATTEMPT}/jobs?per_page=100" \
+            --jq ".jobs[] | select(.runner_name == \"${RUNNER_NAME}\")" 2>/dev/null | head -c 200000 || true)
+          if [ -n "$job" ]; then
+            step=$(echo "$job" | jq -r '[.steps[] | select(.conclusion == "failure") | .name] | first // empty' 2>/dev/null || true)
+            job_id=$(echo "$job" | jq -r '.id' 2>/dev/null || true)
+            [ -n "$step" ] && reason="실패한 단계: ${step}"
+            if [ -n "$job_id" ]; then
+              # 'Process completed with exit code N'은 다른 오류가 있으면 뺀다. 최대 3개, 하나에 300자
+              errors=$(gh api "repos/${REPO}/check-runs/${job_id}/annotations" 2>/dev/null \
+                | jq -r '[.[] | select(.annotation_level == "failure") | .message] as $all
+                         | ([$all[] | select(test("^Process completed with exit code") | not)] | if length > 0 then . else $all end)
+                         | .[:3][] | gsub("\n"; " ") | .[:300] | "> " + .' 2>/dev/null || true)
+              [ -n "$errors" ] && reason="${reason:+${reason}$'\n'}${errors}"
+            fi
+          fi
+          [ -n "$reason" ] && line="${line}"$'\n'"${reason}"
+        fi
+        # 디스코드 한 메시지는 2000자까지다
+        line="${line:0:1700}"
+
+        if [[ "$WEBHOOK_URL" == *hooks.slack.com* ]]; then
+          text="*${mark}* ${TITLE}"$'\n'"${line}"$'\n'"<${RUN_URL}|실행 보기>"
+          body=$(jq -n --arg t "$text" '{text: $t}')
+        else
+          # <주소>로 감싸면 디스코드가 미리보기 카드를 붙이지 않는다
+          text="**${mark}** ${TITLE}"$'\n'"${line}"$'\n'"<${RUN_URL}>"
+          body=$(jq -n --arg t "$text" '{username: "freshlink-ci", content: $t}')
+        fi
+        if ! curl -fsS -X POST -H "Content-Type: application/json" -d "$body" "$WEBHOOK_URL" >/dev/null; then
+          echo "::warning::웹훅 전송에 실패했다(작업 결과와는 상관없다)"
+        fi
