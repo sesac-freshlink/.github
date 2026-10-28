@@ -68,6 +68,17 @@
 
 > 근거와 계산: [비용 계산](https://github.com/sesac-freshlink/.github/blob/main/docs/비용-계산.md) · [AWS 리소스 계획](https://github.com/sesac-freshlink/.github/blob/main/docs/aws-리소스-계획.md) 3장(노드 산정)
 
+#### 🔔 알림: 문제와 배포 결과는 디스코드로 바로 온다
+
+- **DLQ:** 처리 못 한 쪽지가 DLQ에 쌓이면 `#dlq-알림`에 큐 이름·이유·할 일이 오고, 비워지면 다시 알려 준다(dev·prod).
+- **배포:** dev·prod에 머지되면 배포 성공·실패가 `#배포-알림`에 커밋·작성자·실행 링크와 함께 온다.
+
+| #dlq-알림 | #배포-알림 |
+| --- | --- |
+| ![DLQ 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/discord/dlq-alert.png) | ![배포 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/discord/deploy-alert.png) |
+
+> 설정 방법: [팀원 가이드 6 디스코드 알림](https://github.com/sesac-freshlink/.github/blob/main/docs/팀원-가이드-6-디스코드-알림.md)
+
 ## 아키텍처
 
 ![FreshLink 아키텍처 구조도](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/architecture/architecture.png)
