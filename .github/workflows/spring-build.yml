@@ -14,6 +14,7 @@
 #
 # AWS는 GitHub OIDC로 Role freshlink-ci-ecr-push를 맡는다(저장된 AWS 키 없음). 그 Role은 서비스 레포의 dev·main 브랜치만 믿는다.
 # gitops 커밋은 조직 비밀 GITOPS_DEPLOY_KEY(gitops 레포 쓰기 deploy key)로 한다.
+# dev 배포·prod 승격 결과는 조직 비밀 DEPLOY_WEBHOOK_URL로 알린다(actions/notify). 서비스 레포 ci.yml의 secrets: inherit로 넘어온다.
 name: spring-build
 
 on:
@@ -29,6 +30,8 @@ on:
         default: "arn:aws:iam::929523582720:role/freshlink-ci-ecr-push"
     secrets:
       GITOPS_DEPLOY_KEY:
+        required: false
+      DEPLOY_WEBHOOK_URL: # 조직 비밀. 배포 성공·실패 알림(actions/notify). 없으면 알림만 건너뛴다
         required: false
 
 env:
@@ -181,6 +184,16 @@ jobs:
           echo "::error::gitops push가 계속 실패했다"
           exit 1
 
+      # dev 배포(dev push·수동 실행)일 때만 성공·실패를 알린다. PR 빌드는 알리지 않는다
+      - name: 배포 알림
+        if: always() && steps.meta.outputs.deploy == 'true'
+        uses: sesac-freshlink/.github/actions/notify@main
+        with:
+          webhook-url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "${{ steps.meta.outputs.service }} dev 배포"
+          commit: ${{ steps.meta.outputs.tag }}
+
   # ------------------------------------------------------------------ prod 승격 (main)
   # dev에서 시험한 바로 그 이미지를 prod에 올린다. 다시 빌드하면 의존성·베이스 이미지가 달라질 수 있다.
   promote:
@@ -296,3 +309,13 @@ jobs:
             --title "${version} prod 배포 (${SERVICE}:${TAG})" \
             --notes "prod 이미지: \`${SERVICE}:${TAG}\` (dev에서 시험한 그 이미지, gitops envs/prod/${SERVICE}/values.yaml)"
           echo "GitHub Release ${version} (이미지 ${TAG})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 배포 알림
+        if: always()
+        uses: sesac-freshlink/.github/actions/notify@main
+        with:
+          webhook-url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "${{ steps.meta.outputs.service || github.event.repository.name }} prod 승격"
+          commit: ${{ steps.meta.outputs.tag }}
+          details: "prod 이미지 태그 = 합친 dev 커밋"

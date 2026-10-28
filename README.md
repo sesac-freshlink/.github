@@ -24,7 +24,9 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`claude-agents/`](claude-agents) | 팀 공용 Claude Code 에이전트·스킬·명령 md **원본**. 쓰고 싶은 레포의 `.claude/`에 복사해서 쓴다(선택). 아래 [Claude Code 에이전트](#claude-code-에이전트) 참고 |
 | [`docs/ai-agents.md`](docs/ai-agents.md) | 각 레포에 복사하는 법, PM에게 맡기는 법, 에이전트별 역할, 수정 방법 |
 
-재사용 워크플로 `.github/workflows/spring-build.yml`(각 서비스 레포가 몇 줄로 불러 쓴다). 2차에 배포 성공·실패 알림 웹훅 단계를 더한다(2026-10-28).
+재사용 워크플로 `.github/workflows/spring-build.yml`(각 서비스 레포가 몇 줄로 불러 쓴다). dev 배포·prod 승격이 끝나면 성공·실패를 디스코드(또는 슬랙)로 알린다(2026-10-28).
+
+알림 액션 [`actions/notify`](actions/notify/action.yml): 조직 비밀 `DEPLOY_WEBHOOK_URL`로 결과·커밋 7자리·실행 링크를 보내고, 실패면 실패한 단계 이름과 오류 메시지(annotation, 최대 3개)를 붙인다. spring-build, frontend `frontend-deploy`, infra `dev-cluster`(prod-cluster 포함)가 작업 마지막 단계에서 `uses: sesac-freshlink/.github/actions/notify@main`으로 부른다. 비밀이 없으면 알림만 건너뛴다.
 
 - 담당: 김진아
 - 브랜치: `main` ← 작업 브랜치 (배포 없음)
