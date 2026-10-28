@@ -236,7 +236,7 @@ DB는 Testcontainers MySQL 8.4, SQS는 `SqsTemplate` 목으로 합니다. CI(`bu
 
 ## 10. Claude Code로 진행한다면
 
-`freshlink-backend` 플러그인이 설치되어 있으면, `common` 레포 폴더에서 Claude Code를 열고 이렇게 시작하면 됩니다.
+(선택) `common` 레포 `.claude/`에 백엔드 에이전트를 복사해 두었다면([ai-agents.md](ai-agents.md) 2장, 2026-10-28부터 플러그인 대신 이 방식), `common` 레포 폴더에서 Claude Code를 열고 이렇게 시작하면 됩니다.
 
 ```
 .github 레포 docs/common-v0.2.0-인수인계.md 를 읽어.

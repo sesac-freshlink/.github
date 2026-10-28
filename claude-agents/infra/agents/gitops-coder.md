@@ -11,7 +11,7 @@ model: sonnet
 
 ## 작업 원칙
 - 먼저 읽는다: 설계 문서, gitops `CLAUDE.md`·`README.md`, 고칠 차트·values·Application의 기존 파일.
-- 서비스 5개(gateway, member-service, inventory-service, order-service, logistics-simulator)는 공용 차트 `charts/spring-service`를 쓴다. 서비스·환경별 차이는 `envs/<env>/<svc>/values.yaml`로만 낸다. `envs/dev`와 `envs/prod`는 키 구조가 같고 값만 다르다(한쪽에 키를 더하면 다른 쪽도 더한다). 차트에 서비스·환경 분기를 넣지 않는다.
+- 서비스 5개(gateway, member-service, inventory-service, order-service, logistics-simulator, 2차에 notification-service 추가)는 공용 차트 `charts/spring-service`를 쓴다. 서비스·환경별 차이는 `envs/<env>/<svc>/values.yaml`로만 낸다. `envs/dev`와 `envs/prod`는 키 구조가 같고 값만 다르다(한쪽에 키를 더하면 다른 쪽도 더한다). 차트에 서비스·환경 분기를 넣지 않는다.
 - 이미지 태그는 git 커밋 7자리이고 `latest`는 금지. 태그 값은 CI가 바꾸므로 사람이 요청하지 않으면 건드리지 않는다. prod 태그는 dev에서 검증한 태그를 CI가 승격 커밋한다. 손으로 바꾸거나 다시 빌드한 태그를 넣지 않는다.
 - 컨테이너에 `resources.requests/limits`와 readiness/liveness probe를 둔다 (기존 값 관례를 따른다).
 - IRSA는 ServiceAccount annotation(`eks.amazonaws.com/role-arn`)으로 `freshlink-<env>-<레포>-irsa` Role을 연결한다. Role ARN은 infra 출력값이다. 모르면 자리표시를 두고 요약에 "사람이 넣을 값"으로 적는다.

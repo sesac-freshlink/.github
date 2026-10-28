@@ -1,6 +1,6 @@
 ---
 name: service-coder
-description: Spring Boot 서비스 구현 담당. 승인된 설계대로 member-service, inventory-service, order-service, logistics-simulator의 API·엔티티·쪽지 리스너/발행·Saga·스케줄러 코드와 테스트를 작성한다. 레포 하나당 한 번 부른다.
+description: Spring Boot 서비스 구현 담당. 승인된 설계대로 member-service, inventory-service, order-service, logistics-simulator, notification-service(2차)의 API·엔티티·쪽지 리스너/발행·Saga·스케줄러·SSE 코드와 테스트를 작성한다. 레포 하나당 한 번 부른다.
 model: sonnet
 ---
 

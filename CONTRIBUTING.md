@@ -62,7 +62,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 - **PR은 필수다.** 자기 레포라도 `main`·`dev`에 직접 push하지 않고, 작업 브랜치에서 PR을 열어 합친다. `dev` → `main`, `hotfix`도 PR로 한다. (예외: `gitops`의 이미지 태그 커밋은 CI가 자동으로 한다.)
 - **합치기 전에 CI 빌드 체크만 통과하면 된다.** 아래 [PR 합치는 조건](#pr-합치는-조건)을 본다.
 - **승인은 받지 않아도 된다.** CI가 초록이면 담당자가 직접 합친다.
-- **합치는 방식:** 작업 브랜치 → `dev`는 **Squash merge**, `dev` → `main`은 **Merge commit**.
+- **합치는 방식:** 작업 브랜치 → `dev`는 **Squash merge**, `dev` → `main`은 **Merge commit**. `dev` → `main`을 Squash로 합치면 prod 승격이 멈춘다(infra README 4-13).
 - **`dev` → `main` PR 제목:** `release: 2026-10-24 배포`
 - 이슈를 닫으려면 본문에 `Closes sesac-freshlink/inventory-service#12`
 
@@ -98,7 +98,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | --- | --- | --- |
 | `common` | SemVer 태그 → GitHub Packages 배포 | `v0.1.0` |
 | 서비스 이미지 | git 커밋 7자리. `latest` 금지 | `order-service:a1b2c3d` |
-| 서비스 릴리스 (선택) | 시연 전 `main`에 날짜 태그 | `release-2026-11-07` |
+| 서비스 릴리스 | `main`에 합치면 prod 승격 작업이 날짜 태그와 GitHub Release를 자동으로 만든다 | `v2026.10.xx` |
 
 ## 7. 비밀값
 
@@ -115,6 +115,12 @@ AWS 키, 토스 키는 **절대 커밋하지 않는다.** (JWT 서명 키는 없
 
 **프론트엔드 공통 로직**(레이아웃, 라우팅, 역할 가드, `src/shared` 공통 컴포넌트·API 클라이언트 등)은 김진아가 처음 세팅만 했다. 그 뒤로는 팀원 누구나 자유롭게 고친다. 다른 사람 화면에 영향이 가는 변경이면 PR에 적고 팀 채널에 한 줄 알린다. `frontend`의 `CODEOWNERS`가 김진아를 리뷰어로 자동 지정해도 승인은 필요 없다.
 
-## 9. 막히면
+## 9. Claude Code 에이전트 (선택, 2026-10-28)
+
+- **에이전트·스킬·명령 md 파일을 레포에 넣어 쓰는 것은 필수가 아니다.** 쓰지 않아도 되고, 레포에 복사하는 PR을 올리지 않아도 된다.
+- 쓰고 싶으면 `.github` 레포 `claude-agents/`의 원본을 그 레포 `.claude/`에 복사한다(방법은 [`docs/ai-agents.md`](docs/ai-agents.md) 2장). 플러그인(marketplace) 방식은 너무 느려서 쓰지 않는다.
+- 에이전트를 고칠 때는 `.github`의 원본을 먼저 고치고 PR로 합친다. 레포 하나에만 필요한 규칙은 그 레포 `CLAUDE.md`에 쓴다.
+
+## 10. 막히면
 
 30분 넘게 혼자 막혀 있으면 팀 채널에 질문한다. 막힌 것을 공유하는 것도 진행 상황이다. 인프라·백엔드 공통 문제가 아니면 먼저 팀 채널에 올린다.

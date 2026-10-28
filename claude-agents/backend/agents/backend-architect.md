@@ -21,11 +21,12 @@ model: opus
   - **스케줄러:** 파드 2개 → ShedLock. 주기와 잠금 시간
   - **gateway:** 라우트, 공개 경로, `/api/owner/**`의 OWNER 그룹 확인, 위조 헤더 제거 후 주입
   - **관측성:** Actuator(health liveness/readiness, prometheus), Micrometer Tracing → Zipkin, JSON 로그에 traceId. Actuator는 앱 포트에 둔다(관리 포트 없음, 모든 서비스 8080, dev·prod 같음). gateway는 `/actuator` 라우트 없음 + 외부 `/actuator` 차단, ALB·CloudFront는 `/api/*`만 새 비즈니스 지표가 있으면 이름(`freshlink_...`)과 태그
-  - **설정:** 새 환경 변수 이름과 기본값. 운영 값은 gitops values·Secret이 넣으므로 "gitops에 필요한 값"으로 따로 적는다 (gitops·infra는 `freshlink-infra` 플러그인 몫)
+  - **설정:** 새 환경 변수 이름과 기본값. 운영 값은 gitops values·Secret이 넣으므로 "gitops에 필요한 값"으로 따로 적는다 (gitops·infra는 인프라 에이전트 몫)
   - **테스트 계획:** 수용 기준마다 단위/슬라이스(`@WebMvcTest`, `@DataJpaTest`)/통합 테스트 중 무엇으로 확인하는지. 동시성(E-01 동시 예약 100건) 같은 것은 통합 테스트로
   - **레포 간 순서:** common(DTO·버전) → inventory/order/simulator → gateway 라우팅 → frontend 알림. 앞 단계 산출물(common 버전)을 뒤 단계가 어떻게 받는지
 - 팀 결정 (바꾸지 않는다. 바꿔야 하면 "미확정"으로 올린다):
-  - 인증은 Cognito. 토큰 검증은 gateway만 한다 (RS256, JWKS, `iss`, `exp`, `token_use = id`, `aud` = 앱 클라이언트 ID). 역할 = `cognito:groups`, 점포 = `custom:storeId`. 서비스는 토큰을 다시 검증하지 않고 헤더만 믿는다
+  - 인증은 Cognito. 토큰 검증은 gateway만 한다 (RS256, JWKS, `iss`, `exp`, `token_use = id`, `aud` = 앱 클라이언트 ID). 역할 = `cognito:groups`, 점포 = `custom:storeId`. 서비스는 토큰을 다시 검증하지 않고 헤더만 믿는다. 2026-10-28 BFF 전환 결정으로 토큰은 gateway가 굽는 HttpOnly 쿠키 `fl_id`로 오지만 서비스 쪽 규칙은 같다
+  - 2차(2026-10-28)에 확정된 인프라: ElastiCache for Valkey(선착순 대기열, order만), SQS 알림 큐 `<env>-notification-events`(+DLQ), notification-service. 이것은 "미확정"으로 올리지 않아도 된다
   - 재고 변경은 전부 `inventory-commands.fifo`를 거친다. DB 락으로 풀지 않는다
   - 실시간 재고는 점주 화면이 3초마다 조회하는 폴링. 재고 조회 API가 그 요청을 감당하게 설계한다
   - 주문 저장소는 **MySQL 확정**(10/15). 주문 상태 변경과 outbox 저장을 같은 MySQL 트랜잭션으로 설계한다

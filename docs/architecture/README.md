@@ -4,6 +4,7 @@
 
 > 원본: [architecture.svg](architecture.svg) · 실선 = 사용자 요청, 점선 = 메시지·배포·관리. 번호는 그림의 빨간 배지와 같다.
 > 그림은 환경 하나만 그렸다. dev와 prod는 같은 구조를 두 번 만든다(아래 11장).
+> 그림은 MVP 구성이다. 2026-10-28에 정한 2차 변경(BFF, 알림 서비스, Redis, 도메인)은 그림에 아직 없고 아래 12장에 적었다. 구현이 끝나면 그림을 다시 만든다.
 
 ## 한 줄 요약
 
@@ -92,3 +93,15 @@ order-service가 토스페이먼츠 결제 승인 API를 호출한다. 프라이
 - 환경마다 따로: VPC, EKS 클러스터, RDS, SQS 큐, Cognito User Pool, Secrets Manager 비밀값.
 - 공용: ECR, GitHub OIDC, Terraform 상태(tfstate).
 - `dev` 브랜치 → dev, `main` → prod(같은 이미지 태그를 승격, 다시 빌드하지 않는다).
+
+## 12. 2차에 바뀌는 것 (2026-10-28 결정, 그림에 아직 없음)
+
+| 번호 | 바뀌는 것 |
+| --- | --- |
+| ⑤·⑮ | **BFF:** 사용자 → Cognito 직접 화살표가 없어진다. 가입·로그인도 CloudFront → ALB → gateway `/api/auth/**`를 거치고, gateway가 Cognito(`AdminInitiateAuth` 등, IRSA·클라이언트 시크릿)를 부른 뒤 토큰을 HttpOnly 쿠키로 내려 준다. API 요청의 토큰은 `Authorization` 대신 쿠키로 온다. 검증(JWKS)과 헤더 재작성은 그대로 |
+| ⑤ | gateway → notification-service 경로 `/api/notifications/**` 추가. SSE라 응답 타임아웃을 늘리고 버퍼링을 끈다 |
+| ⑦ | order·inventory → 알림 큐 `<env>-notification-events`(+DLQ) → notification-service. DLQ마다 CloudWatch 경보 → 웹훅 |
+| 새 | order-service ↔ ElastiCache for Valkey(앱 서브넷, 6379, TLS). 선착순 대기열과 입장 토큰 |
+| ①·⑫ | Route 53 도메인 → CloudFront 별칭, ACM 인증서(us-east-1), 응답 헤더 정책(CSP·HSTS) |
+| ⑨~⑪ | 배포 성공·실패와 ArgoCD 동기화 실패를 웹훅(디스코드 또는 슬랙)으로 알린다. ECR 리포지토리에 `notification-service` 추가 |
+| ⑯ | Secrets Manager에 gateway Cognito 클라이언트 시크릿, order Redis 접속 정보, notification DB 비밀번호 추가 |

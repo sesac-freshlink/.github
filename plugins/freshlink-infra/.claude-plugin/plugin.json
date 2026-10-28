@@ -1,8 +1,0 @@
-{
-  "name": "freshlink-infra",
-  "version": "0.3.1",
-  "description": "FreshLink 인프라 작업용 PM 모드(/infra-pm)와 서브에이전트(planner, architect, iac/gitops/pipeline coder, verifier, reviewer), 파이프라인 스킬",
-  "author": {
-    "name": "김진아"
-  }
-}
