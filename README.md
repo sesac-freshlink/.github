@@ -11,7 +11,7 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`docs/aws-리소스-계획.md`](docs/aws-리소스-계획.md) | AWS 리소스 계획(dev·prod 환경, 노드·RDS 산정, 네트워크, 비용, 켜고 끄는 일정, Terraform 모듈) |
 | [`docs/기술스택과 선택이유.md`](docs/%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC%20%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) | 도구별 선택 이유 (관측성 3-5, 켜고 끄기 3-6, Cognito와 BFF 전환 3-7, Redis·SSE 3-8 등) |
 | [`docs/비용-계산.md`](docs/비용-계산.md) | dev + prod 비용 계산 (10/19~11/20), 2차 ElastiCache·도메인 추가분 |
-| 팀원 가이드 [1 common](docs/팀원-가이드-1-common.md) · [2 인프라·배포](docs/팀원-가이드-2-인프라-배포.md) · [3 프론트 연동](docs/팀원-가이드-3-프론트-연동.md) · [4 관측성](docs/팀원-가이드-4-관측성.md) · [5 주말 dev 켜기](docs/팀원-가이드-5-주말-dev-켜기.md) | 팀원이 직접 쓰는 방법 |
+| 팀원 가이드 [1 common](docs/팀원-가이드-1-common.md) · [2 인프라·배포](docs/팀원-가이드-2-인프라-배포.md) · [3 프론트 연동](docs/팀원-가이드-3-프론트-연동.md) · [4 관측성](docs/팀원-가이드-4-관측성.md) · [5 주말 dev 켜기](docs/팀원-가이드-5-주말-dev-켜기.md) · [6 디스코드 알림](docs/팀원-가이드-6-디스코드-알림.md) | 팀원이 직접 쓰는 방법 |
 | [`docs/백엔드-공통작업-인수인계.md`](docs/백엔드-공통작업-인수인계.md) | 백엔드 공통 기준(Java 21·Spring Boot 4.0·프로필·포트 8080), 서비스 레포 Spring 뼈대, common v0.1.0 작업 안내 |
 | [`docs/백엔드-공통-규칙.md`](docs/백엔드-공통-규칙.md) | 뼈대 작업 결과와 규칙: 버전, gateway WebMVC, Flyway, 로컬 실행, 환경 변수, 오류 처리, 서비스 간 통신(명령은 큐·조회는 동기), common 가져다 쓰기 |
 | [`docs/멘토링-후-사람별-할-일.md`](docs/멘토링-후-사람별-할-일.md) | **2차 범위(10/28 멘토링 후, 11/3까지)** 사람별 할 일: MVP 릴리스, BFF 전환, 알림 서비스(SSE), 선착순 대기열(Redis), 매출 대시보드·판매 순위, 배포 실패 대응, 재시도·DLQ 재처리, 도메인·ACM·CSP |
