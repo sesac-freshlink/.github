@@ -62,7 +62,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 - **PR은 필수다.** 자기 레포라도 `main`·`dev`에 직접 push하지 않고, 작업 브랜치에서 PR을 열어 합친다. `dev` → `main`, `hotfix`도 PR로 한다. (예외: `gitops`의 이미지 태그 커밋은 CI가 자동으로 한다.)
 - **합치기 전에 CI 빌드 체크만 통과하면 된다.** 아래 [PR 합치는 조건](#pr-합치는-조건)을 본다.
 - **승인은 받지 않아도 된다.** CI가 초록이면 담당자가 직접 합친다.
-- **합치는 방식:** 작업 브랜치 → `dev`는 **Squash merge**, `dev` → `main`은 **Merge commit**.
+- **합치는 방식:** 작업 브랜치 → `dev`는 **Squash merge**, `dev` → `main`은 **Merge commit**. `dev` → `main`을 Squash로 합치면 prod 승격이 멈춘다(infra README 4-13).
 - **`dev` → `main` PR 제목:** `release: 2026-10-24 배포`
 - 이슈를 닫으려면 본문에 `Closes sesac-freshlink/inventory-service#12`
 
@@ -98,7 +98,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | --- | --- | --- |
 | `common` | SemVer 태그 → GitHub Packages 배포 | `v0.1.0` |
 | 서비스 이미지 | git 커밋 7자리. `latest` 금지 | `order-service:a1b2c3d` |
-| 서비스 릴리스 (선택) | 시연 전 `main`에 날짜 태그 | `release-2026-11-07` |
+| 서비스 릴리스 | `main`에 합치면 prod 승격 작업이 날짜 태그와 GitHub Release를 자동으로 만든다 | `v2026.10.xx` |
 
 ## 7. 비밀값
 

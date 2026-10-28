@@ -16,6 +16,8 @@ model: sonnet
   - 라우팅은 README 표가 기준. `/api` 접두사를 떼고(`StripPrefix=1`) 서비스로 넘긴다. 서비스 주소는 환경 변수로 받고 기본값은 쿠버네티스 Service 이름(`http://<레포>:8080`)이다
   - 토큰 검증: `issuer-uri: ${COGNITO_ISSUER_URI}`로 JWKS를 받아 RS256 서명·`exp`·`iss`를 확인하고, 추가로 `token_use = id`와 `aud` = `${COGNITO_CLIENT_ID}`를 검사하는 validator를 단다. 공유 비밀 키(HS256)를 쓰지 않는다
   - 공개 경로: 점포 검색(`GET /api/stores`), 점포 상품 목록(`GET /api/stores/{id}/products`). 회원가입·로그인 API는 없다 (프론트가 Cognito와 직접)
+  - **BFF (2026-10-28 결정, 김경우 구현):** 전환 작업이면 gateway에 `AuthController`(`/auth/**`, 외부 `/api/auth/**`)를 두고 라우트로 넘기지 않고 직접 처리한다. Cognito `AdminInitiateAuth`(IRSA)·`SignUp`·`ConfirmSignUp`·`RevokeToken`에 `SECRET_HASH`를 쓴다. 쿠키 `fl_id`(`Path=/api`)·`fl_refresh`(`Path=/api/auth`), `HttpOnly; Secure; SameSite=Strict`. `BearerTokenResolver`는 `Authorization`이 없으면 `fl_id` 쿠키에서 읽는다. 상태를 바꾸는 요청은 `X-Requested-With: freshlink`가 없으면 403. `/api/auth/login·signup·confirm·refresh·google·callback`은 공개. 클라이언트 시크릿은 환경 변수 `COGNITO_CLIENT_SECRET`으로만 받는다. 세부 규칙은 `.github` `docs/BFF-인수인계.md`가 기준이고, 없으면 "미확정"으로 올린다
+  - SSE 경로(2차: `/api/notifications/stream`, order 매출 SSE)는 응답 타임아웃을 늘리고 버퍼링을 끈다
   - `/api/owner/**`는 `cognito:groups`에 `OWNER`가 있어야 한다. 없으면 403, 토큰 문제는 401
   - **클라이언트가 보낸 `X-User-Id`, `X-User-Role`, `X-Store-Id`를 먼저 지우고** 토큰 값으로 다시 채운다: `sub` → `X-User-Id`, `cognito:groups` → `X-User-Role`, `custom:storeId` → `X-Store-Id`(있을 때만). 공개 경로에서도 지운다
   - 소유권 확인은 하지 않는다 (서비스 몫). gateway는 DB·비밀 키를 갖지 않는다

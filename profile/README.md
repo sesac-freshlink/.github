@@ -19,7 +19,7 @@
 
 ### 인프라: 정해진 돈과 메모리 안에서 돌린다
 
-3. **비용:** dev·prod 두 환경을 10/19\~11/20(33일)에 **약 240 USD**로 운영한다. 그냥 켜 두면 약 765 USD다. 월 예산은 10월 160 USD, 11월 200 USD다.
+3. **비용:** dev·prod 두 환경을 10/19\~11/20(33일)에 **약 240 USD**로 운영한다(2차 선착순용 ElastiCache·도메인을 더하면 약 270\~280 USD). 그냥 켜 두면 약 765 USD다. 월 예산은 10월 160 USD, 11월 200 USD다.
 4. **메모리:** 노드는 **t3.large 2대**뿐이다. 앱·시스템·관측성 파드 40개가 메모리 할당 가능량의 **65%** 안에 들어간다.
 
 #### 💰 비용: 765 USD → 240 USD, 69% 줄인다
@@ -78,11 +78,12 @@
 
 | 레포 | 내용 | 담당 |
 | --- | --- | --- |
-| [gateway](https://github.com/sesac-freshlink/gateway) | Spring Cloud Gateway, 라우팅·JWT 검증 (Cognito JWKS) | 김진아 |
+| [gateway](https://github.com/sesac-freshlink/gateway) | Spring Cloud Gateway, 라우팅·JWT 검증 (Cognito JWKS). 2차에 BFF(로그인·토큰 갱신·HttpOnly 쿠키)를 겸한다 | 김진아 (BFF 로직은 김경우) |
 | [member-service](https://github.com/sesac-freshlink/member-service) | 회원 프로필·점포 (가입·로그인은 Amazon Cognito) | 김경우 |
 | [inventory-service](https://github.com/sesac-freshlink/inventory-service) | 상품·재고(lot)·입고·예약·폐기 | 이태우 |
 | [order-service](https://github.com/sesac-freshlink/order-service) | 주문·결제·Saga | 김경우 |
 | [logistics-simulator](https://github.com/sesac-freshlink/logistics-simulator) | 가상 물류센터, 입고 쪽지 발행 | 김진아 |
+| notification-service (2차, 만들 예정) | 화면 알림 (SQS로 이벤트를 받아 SSE로 전달) | 김진아 |
 | [frontend](https://github.com/sesac-freshlink/frontend) | React (점주 `/owner`, 고객 `/customer`) | 공통 |
 | [common](https://github.com/sesac-freshlink/common) | Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 |
 | [infra](https://github.com/sesac-freshlink/infra) | Terraform (persistent / cluster) | 김진아 |
@@ -92,11 +93,12 @@
 
 | 영역 | 기술 |
 | --- | --- |
-| 프론트엔드 | React · S3 + CloudFront(OAC) · ACM |
+| 프론트엔드 | React · S3 + CloudFront(OAC) · (2차) Route 53 도메인 + ACM · CSP 응답 헤더 |
 | 백엔드 | Java 21 · Spring Boot 4.0 · Spring Data JPA · Spring Security(OAuth2 Resource Server) · Spring Cloud Gateway · Spring Cloud AWS |
-| 인증 | Amazon Cognito User Pool (그룹 OWNER·CUSTOMER) · Amplify Auth · RS256 JWT를 JWKS로 검증 |
-| 데이터 | Amazon RDS MySQL (인스턴스 1대, 서비스별 스키마 분리) |
-| 메시징 | Amazon SQS (FIFO 1 + 표준 1 + DLQ 2) · Outbox · 멱등 처리 · Saga |
+| 인증 | Amazon Cognito User Pool (그룹 OWNER·CUSTOMER·ADMIN) · RS256 JWT를 JWKS로 검증 · MVP는 Amplify Auth, 2차에 gateway BFF + HttpOnly 쿠키로 전환 |
+| 데이터 | Amazon RDS MySQL (인스턴스 1대, 서비스별 스키마 분리) · (2차) ElastiCache for Valkey (선착순 대기열) |
+| 메시징 | Amazon SQS (FIFO 1 + 표준 1 + DLQ 2, 2차에 알림 큐 추가) · Outbox · 멱등 처리 · Saga · DLQ 재처리 |
+| 실시간 (2차) | SSE (화면 알림, 점주 실시간 매출) |
 | 결제 | 토스페이먼츠 (테스트) |
 | 플랫폼 | AWS EKS (t3.large × 2) · AWS Load Balancer Controller · IRSA |
 | IaC | Terraform (유지 묶음 / 클러스터 묶음 분리) |
@@ -114,7 +116,7 @@
 
 | 이름 | 역할 |
 | --- | --- |
-| 김진아 | 팀장 · 인프라(Terraform, EKS, CI/CD) · gateway · logistics-simulator · common |
-| 이태우 | inventory-service · 점주 재고 화면 |
-| 김경우 | member-service · order-service · 로그인·주문 화면 |
+| 김진아 | 팀장 · 인프라(Terraform, EKS, CI/CD) · gateway · logistics-simulator · common · (2차) 알림 서비스 · BFF·Redis 인프라 |
+| 이태우 | inventory-service · 점주 재고 화면 · (2차) 상품별 판매 순위 |
+| 김경우 | member-service · order-service · 로그인·주문 화면 · (2차) BFF 로직 · 매출 대시보드 · 선착순 대기열 |
 | 문영훈 | 지원(10/14\~10/16) · 서비스 4개 Spring 뼈대 · common v0.1.0·v0.1.1(쪽지 DTO 7종, 공통 오류 응답) · 오류 처리 |

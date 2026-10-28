@@ -9,10 +9,13 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`ISSUE_TEMPLATE/`](ISSUE_TEMPLATE) | 기능·버그 이슈 양식 |
 | [`docs/기획안-및-설계도.md`](docs/기획안-및-설계도.md) | MVP 기획안(기능·흐름·담당·데이터 모델·메시지 명세) |
 | [`docs/aws-리소스-계획.md`](docs/aws-리소스-계획.md) | AWS 리소스 계획(dev·prod 환경, 노드·RDS 산정, 네트워크, 비용, 켜고 끄는 일정, Terraform 모듈) |
-| [`docs/기술스택과 선택이유.md`](docs/%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC%20%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) | 도구별 선택 이유 (관측성 3-5, 켜고 끄기 3-6, Cognito 3-7 등) |
+| [`docs/기술스택과 선택이유.md`](docs/%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC%20%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) | 도구별 선택 이유 (관측성 3-5, 켜고 끄기 3-6, Cognito와 BFF 전환 3-7, Redis·SSE 3-8 등) |
+| [`docs/비용-계산.md`](docs/비용-계산.md) | dev + prod 비용 계산 (10/19~11/20), 2차 ElastiCache·도메인 추가분 |
+| 팀원 가이드 [1 common](docs/팀원-가이드-1-common.md) · [2 인프라·배포](docs/팀원-가이드-2-인프라-배포.md) · [3 프론트 연동](docs/팀원-가이드-3-프론트-연동.md) · [4 관측성](docs/팀원-가이드-4-관측성.md) · [5 주말 dev 켜기](docs/팀원-가이드-5-주말-dev-켜기.md) | 팀원이 직접 쓰는 방법 |
 | [`docs/백엔드-공통작업-인수인계.md`](docs/백엔드-공통작업-인수인계.md) | 백엔드 공통 기준(Java 21·Spring Boot 4.0·프로필·포트 8080), 서비스 레포 Spring 뼈대, common v0.1.0 작업 안내 |
 | [`docs/백엔드-공통-규칙.md`](docs/백엔드-공통-규칙.md) | 뼈대 작업 결과와 규칙: 버전, gateway WebMVC, Flyway, 로컬 실행, 환경 변수, 오류 처리, 서비스 간 통신(명령은 큐·조회는 동기), common 가져다 쓰기 |
-| [`docs/jina/할일-목록.md`](docs/jina/할일-목록.md) | 김진아 할 일 목록 |
+| [`docs/멘토링-후-사람별-할-일.md`](docs/멘토링-후-사람별-할-일.md) | **2차 범위(10/28 멘토링 후, 11/3까지)** 사람별 할 일: MVP 릴리스, BFF 전환, 알림 서비스(SSE), 선착순 대기열(Redis), 매출 대시보드·판매 순위, 배포 실패 대응, 재시도·DLQ 재처리, 도메인·ACM·CSP |
+| [`docs/jina/할일-목록.md`](docs/jina/할일-목록.md) | 김진아 할 일 목록 (MVP까지. 2차는 위 문서) |
 | [`docs/주문-결제-흐름과-재고-예약.md`](docs/주문-결제-흐름과-재고-예약.md) | 고객이 보는 주문·결제 흐름과 백엔드 재고 예약(RESERVE·CONFIRM·RELEASE)의 구분, 주문 상태별 고객 화면 문구 |
 | [`docs/git-계획.md`](docs/git-계획.md) | Organization·레포 구성, 브랜치·태그·CI/CD·시크릿 규칙 |
 | [`docs/architecture/`](docs/architecture) | 아키텍처 구조도(PNG·SVG)와 번호별 흐름 설명, 구조도 계획([`구조도-계획.md`](docs/architecture/구조도-계획.md))과 생성 스크립트 |
@@ -21,7 +24,7 @@ FreshLink Organization 공통 설정 레포. 여기 있는 파일은 **Organizat
 | [`.claude-plugin/`](.claude-plugin), [`plugins/`](plugins) | 팀 공용 Claude Code 플러그인. **PM에게 한 줄로 맡기면 계획부터 PR까지 진행된다.** 아래 [Claude Code PM 파이프라인](#claude-code-pm-파이프라인) 참고 |
 | [`docs/ai-agents.md`](docs/ai-agents.md) | 플러그인 설치, PM에게 맡기는 법, 에이전트별 역할, 수정 방법 |
 
-앞으로 추가할 것: 재사용 워크플로 `workflows/spring-build.yml`, `workflows/frontend-deploy.yml` (각 서비스 레포가 몇 줄로 불러 쓴다).
+재사용 워크플로 `.github/workflows/spring-build.yml`(각 서비스 레포가 몇 줄로 불러 쓴다). 2차에 배포 성공·실패 알림 웹훅 단계를 더한다(2026-10-28).
 
 - 담당: 김진아
 - 브랜치: `main` ← 작업 브랜치 (배포 없음)

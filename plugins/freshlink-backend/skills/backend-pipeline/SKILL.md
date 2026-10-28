@@ -24,7 +24,8 @@ description: FreshLink 백엔드 작업(gateway, member-service, inventory-servi
 
 | 주제 | 결정 |
 | --- | --- |
-| 인증 | Amazon Cognito. 프론트는 ID 토큰을 보낸다. gateway가 JWKS로 RS256·`iss`·`exp`·`token_use = id`·`aud` 검증. 역할 = `cognito:groups`(OWNER/CUSTOMER), 점포 = `custom:storeId` |
+| 인증 | Amazon Cognito. 프론트는 ID 토큰을 보낸다. gateway가 JWKS로 RS256·`iss`·`exp`·`token_use = id`·`aud` 검증. 역할 = `cognito:groups`(OWNER/CUSTOMER/ADMIN), 점포 = `custom:storeId`. **2026-10-28 BFF 전환 결정:** gateway가 `/api/auth/**`로 Cognito를 대신 부르고 ID 토큰을 HttpOnly 쿠키 `fl_id`로 둔다(로직 김경우, 인프라 김진아, 기준 문서 `.github` `docs/BFF-인수인계.md`). 검증 방식과 헤더 전달은 그대로 |
+| 2차 범위 (2026-10-28) | 알림 = SQS 알림 큐 → notification-service(김진아) → SSE. 선착순 = order-service + ElastiCache(Valkey). 쪽지 재시도·DLQ 재처리는 반드시 한다(`.github` `docs/백엔드-공통-규칙.md` 7장). k6 같은 대형 부하 테스트는 하지 않는다. 사람별 할 일은 `.github` `docs/멘토링-후-사람별-할-일.md` |
 | 신원 전달 | gateway가 위조 헤더를 지우고 `X-User-Id`(sub, UUID 문자열)·`X-User-Role`·`X-Store-Id`를 붙인다. 서비스는 토큰을 다시 검증하지 않는다. 소유권 확인은 서비스 몫 |
 | 재고 변경 | 전부 `inventory-commands.fifo`(그룹 = storeId) 경유. Outbox + `processed_message` 멱등 (common) |
 | 실시간 재고 | 점주 화면이 3초마다 `GET /owner/inventory` 조회 (폴링) |

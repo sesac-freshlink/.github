@@ -34,11 +34,12 @@ Organization 표시 이름(Display name)은 `FreshLink`로 둔다. URL에 쓰이
 
 | 레포 | 내용 | 담당 | 배포 대상 |
 | --- | --- | --- | --- |
-| `gateway` | Spring Cloud Gateway, 라우팅·JWT 검증(Cognito JWKS, RS256) | 김진아 | ECR → EKS |
+| `gateway` | Spring Cloud Gateway, 라우팅·JWT 검증(Cognito JWKS, RS256). 2차에 BFF(`/api/auth/**`, HttpOnly 쿠키)를 겸한다 | 김진아 (BFF 로직은 김경우, 2026-10-28) | ECR → EKS |
 | `member-service` | 회원 프로필·점포 (로그인·토큰 발급은 Amazon Cognito) | 김경우 | ECR → EKS |
 | `inventory-service` | 상품·재고·입고·예약·폐기 | 이태우 | ECR → EKS |
 | `order-service` | 주문·결제·Saga | 김경우 | ECR → EKS |
 | `logistics-simulator` | 가상 물류센터, INBOUND 쪽지 발행 | 김진아 | ECR → EKS |
+| `notification-service` (2차, 만들 예정) | 화면 알림. 알림 큐에서 이벤트를 받아 저장하고 SSE로 보낸다 (2026-10-28 결정) | 김진아 | ECR → EKS |
 | `frontend` | React (점주 `/owner`, 고객 `/customer`) | 팀 공동 (공통 로직은 김진아가 처음 세팅만, 이후 누구나 수정) | S3 + CloudFront |
 | `common` | 공통 모듈: Outbox 발행기, 멱등 처리, 메시지 DTO | 김진아 | GitHub Packages (Maven) |
 | `infra` | Terraform (persistent / cluster 묶음) | 김진아 | `terraform apply` |
@@ -184,7 +185,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | `dev` | PR로만 합친다. CI 빌드 통과 뒤 합침 (AI 리뷰는 선택), 승인 필수 없음. 강제 push·브랜치 삭제 금지 |
 | 작업 브랜치 | 제한 없음. 합치면 자동 삭제 (레포 설정 'Automatically delete head branches' 켜기) |
 
-합치는 방식은 **작업 브랜치 → `dev`: Squash merge**, **`dev` → `main`: Merge commit**으로 한다. 기능 하나가 `dev`에 커밋 하나로 남아 이력이 깔끔해지고, `main`에는 '언제 배포했는지'가 머지 커밋으로 남는다.
+합치는 방식은 **작업 브랜치 → `dev`: Squash merge**, **`dev` → `main`: Merge commit**으로 한다. 기능 하나가 `dev`에 커밋 하나로 남아 이력이 깔끔해지고, `main`에는 '언제 배포했는지'가 머지 커밋으로 남는다. **`dev` → `main`을 Squash로 합치면 prod 승격이 멈춘다**(dev에서 만든 이미지 태그와 `main` 커밋이 이어지지 않아 "ECR에 없다"). 그때는 release PR을 한 번 더 만들어 Merge commit으로 합친다(infra README 4-13).
 
 ---
 
@@ -235,7 +236,7 @@ main (배포)  ←  dev (통합)  ←  feat/기능ID-설명
 | --- | --- | --- |
 | `common` 라이브러리 | SemVer 태그 `vMAJOR.MINOR.PATCH`. 태그를 달면 GitHub Packages에 배포 | `v0.1.0` → `v0.2.0` |
 | 서비스 이미지 | git 커밋 7자리. `latest`는 쓰지 않는다 | `order-service:a1b2c3d` |
-| 서비스 릴리스 (선택) | 시연 전 `main`에 날짜 태그 | `release-2026-11-07` |
+| 서비스 릴리스 | `main`에 합치면 prod 승격 작업(`promote`)이 날짜 태그와 GitHub Release(합친 PR 목록)를 자동으로 만든다. MVP 첫 릴리스는 2차에서 김진아의 가장 급한 일이다(2026-10-28) | `v2026.10.xx` |
 
 `common` Maven 좌표는 `com.freshlink:common:<버전>`으로 한다. `common` 0.x 버전 동안은 쪽지 형식이 바뀔 수 있으므로, 버전을 올릴 때 inventory·order 담당자에게 알린다(기획안 8-2 '메시지 명세' 규칙과 같음).
 

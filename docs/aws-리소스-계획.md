@@ -2,6 +2,8 @@
 
 작성일: 2026-10-08 · 개정: 2026-10-20 (6-4에 묶음별로 실제 들어 있는 것 추가, 2장 노드 최소 0·일정 갱신, 6-5-2 관측 데이터가 남는 기간 추가) · 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
+> **2026-10-28 2차 범위 반영:** 선착순 대기열용 ElastiCache for Valkey, notification-service(ECR·IRSA·DB·알림 큐), BFF용 Cognito `bff` 앱 클라이언트·gateway IRSA, Route 53 도메인·ACM·CloudFront 응답 헤더 정책, DLQ 경보가 더해진다. 아래 표에 "(2차)"로 표시했다. 사람별 할 일은 [멘토링-후-사람별-할-일.md](멘토링-후-사람별-할-일.md).
+
 MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1\~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
 
 ---
@@ -27,10 +29,11 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 배포 | `dev` 브랜치 → dev 환경, `main` → prod 환경. prod는 다시 빌드하지 않고 dev에서 검증한 **같은 이미지 태그**를 올린다 |
 | 예산 | 새싹 지원금 50만 원(약 360 USD, 1 USD ≈ 1,380원 가정) 안에서 두 환경을 운영한다 (6-6 참고) |
 | 리전 | 서울 (ap-northeast-2), 가용 영역 2개 사용 (ap-northeast-2a, 2c) |
-| 트래픽 | 시연 수준 + 동시 주문 100건 테스트(dev에서만). 대용량 부하 테스트는 2순위라 고려하지 않는다 |
+| 트래픽 | 시연 수준. k6 같은 대형 부하 테스트와 동시 구매 100건 같은 시뮬레이션은 지금은 하지 않고 11/3 이후 다시 정한다(2026-10-28) |
 | 구매 방식 | 온디맨드. 시연 중 노드가 회수되면 안 되므로 스팟은 쓰지 않는다 |
 | 관측성 | Prometheus·Grafana·Loki·Zipkin(I-03)을 MVP에 넣는다. 용량은 3장에 포함해 계산했다 |
 | 실시간 재고 | 프론트가 3초마다 조회한다(TanStack Query 폴링). 서버가 연결을 붙잡고 있는 방식이 아니라서 ALB·CloudFront에 따로 맞출 설정이 없다 |
+| 실시간 알림·매출 (2차) | 화면 알림과 점주 실시간 매출은 SSE로 연결을 열어 둔다. heartbeat 30초가 ALB 유휴 타임아웃(기본 60초)보다 짧은지, CloudFront `/api/*` 응답 시간 제한에 걸리지 않는지 dev에서 확인한다 |
 
 ---
 
@@ -60,6 +63,15 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 비용 | AWS Budgets | - | 1 (계정 전체) | 금액 초과 알림. 첫 리소스보다 먼저 만든다 |
 | 관측성 | S3 버킷 (Loki 로그 저장) | 수명 주기 14일 | 1 | 유지 묶음에 둬서 주말 클러스터 삭제 뒤에도 로그가 남는다 |
 | 관측성 | EBS gp3 볼륨 (Prometheus 저장) | 10 GiB | 1 | EBS CSI 드라이버 애드온이 만든다. 지표는 3일만 보관 |
+| 캐시 (2차) | ElastiCache for Valkey | **cache.t4g.micro**, 복제 없음, 전송 암호화(TLS) | 1 | 선착순 대기열·입장 토큰(order-service). 프라이빗 서브넷, 노드 보안 그룹에서 6379만. 중지가 안 되므로 클러스터 묶음에 넣을지 계속 켤지는 비용을 보고 정한다 |
+| 메시징 (2차) | SQS 알림 큐 | 표준 1 + DLQ 1 | 2 | `<env>-notification-events`. order·inventory가 보내고 notification-service가 받는다 |
+| 이미지 (2차) | ECR 리포지토리 추가 | `notification-service` | 1 | ECR 합계 6개 |
+| 보안 (2차) | IRSA 추가 | gateway(Cognito `AdminInitiateAuth`), notification-service(알림 큐 받기) | 2 | gateway는 MVP에서 AWS를 부르지 않아 IRSA가 없었다 |
+| 보안 (2차) | Secrets Manager 추가 | `freshlink-<env>/gateway/cognito`(bff 클라이언트 시크릿), `freshlink-<env>/order/redis`(엔드포인트), notification DB 비밀번호 | 3 | |
+| 인증 (2차) | Cognito 앱 클라이언트 추가 | `bff` (시크릿 있음), Hosted UI 도메인, Google IdP | 1 + 1 + 1 | BFF 로그인과 구글 로그인. 프론트를 다 옮기면 `web` 클라이언트를 지운다 |
+| 진입 (2차) | Route 53 도메인 + 호스팅 영역, ACM 인증서(us-east-1) | `.com` 1개, 공인 인증서 | 1 | CloudFront 별칭 레코드. 인증서는 무료 |
+| 진입 (2차) | CloudFront 응답 헤더 정책 | CSP·HSTS·nosniff·frame·referrer | 1 | 화면(S3) 기본 동작에 붙인다 |
+| 운영 (2차) | CloudWatch 경보 | DLQ마다 `ApproximateNumberOfMessagesVisible > 0` | DLQ 수만큼 | 배포 알림과 같은 웹훅 채널로 보낸다 |
 
 리소스 이름은 `freshlink-<env>-<이름>` 규칙을 따른다(예: `freshlink-dev-mysql`, `freshlink-prod-eks`). 서비스는 큐 이름·DB 주소·Cognito ID를 코드에 박지 않고 설정 값(환경 변수)으로 받는다.
 
@@ -101,6 +113,8 @@ CPU 요청은 파드당 150m로 잡는다. 처음에는 250m였는데, 관측성
 
 **총 요청량: 약 3.1 vCPU, 9.2 GiB** (파드 40개, 환경 1개 기준)
 
+**2차 변경 (2026-10-28):** notification-service 파드 1개(150m, 512Mi 예정)가 더해지고, SSE 때문에 order-service는 처음에 파드 1개로 시작한다(연결된 파드에만 이벤트가 가므로). 둘이 상쇄되어 합계는 거의 같다. order를 다시 2개로 늘릴 때는 Redis Pub/Sub 같은 방법을 먼저 정한다. Redis는 ElastiCache라 노드 용량에 들어가지 않는다.
+
 t3.large 1대에서 파드가 실제로 쓸 수 있는 양(할당 가능량)은 kubelet·OS 예약분을 빼고 **약 1.93 vCPU, 7.1 GiB**다. 2대면 약 3.86 vCPU, 14.2 GiB이므로 **CPU 80%, 메모리 65%**를 요청으로 채운다. 파드 수는 40개로 한도(35 × 2 = 70)의 절반이다.
 
 ### 3-2. 노드 타입 비교
@@ -124,7 +138,7 @@ t3.large 1대에서 파드가 실제로 쓸 수 있는 양(할당 가능량)은 
 - **먼저 차는 것은 CPU 요청이다.** 앱 CPU 요청을 처음 값(250m)으로 두면 합계가 약 3.85 vCPU로 할당 가능량(3.86)에 거의 닿는다. 이러면 롤링 배포 때 새 파드가 Pending에 걸린다. 앱 CPU 요청을 150m로 낮춰 약 3.1 vCPU(80%)로 맞추고, 남는 약 0.75 vCPU를 배포 여유로 쓴다.
 - 노드 그룹 최대값이 이미 3이므로, 아래 경우에만 desired를 3으로 올린다. 켜 두는 시간(310시간)에만 켜면 5주에 약 30 USD가 더 든다.
   - 앱 CPU 요청을 150m로 낮출 수 없을 때 (예: 실제 사용량을 보니 150m로는 응답이 느릴 때)
-  - 동시 주문 100건 테스트나 장애 훈련(노드 1대 강제 종료)을 할 때. 2대 구성에서는 노드 1대가 죽으면 남은 1대에 모든 파드가 다시 뜰 수 없다
+  - (11/3 이후 정하면) 동시 주문 100건 테스트나 장애 훈련(노드 1대 강제 종료)을 할 때. 2대 구성에서는 노드 1대가 죽으면 남은 1대에 모든 파드가 다시 뜰 수 없다
 - 관측성 파드에는 PriorityClass를 앱보다 낮게 준다. 자리가 모자라면 Grafana·Zipkin이 먼저 밀려나고 앱은 계속 뜬다.
 
 ### 3-3. 노드와 서비스의 관계
@@ -249,7 +263,7 @@ flowchart TB
 
 ## 6. 예상 비용
 
-> 2026-10-20: 아래는 10/08 계획 때의 어림값이다. 실제 Terraform 구성과 서울 리전 단가로 dev + prod를 10/19\~11/20 기준으로 다시 계산한 값은 [비용-계산.md](비용-계산.md)에 있다.
+> 2026-10-20: 아래는 10/08 계획 때의 어림값이다. 실제 Terraform 구성과 서울 리전 단가로 dev + prod를 10/19\~11/20 기준으로 다시 계산한 값은 [비용-계산.md](비용-계산.md)에 있다. 2차에 더해지는 ElastiCache·Route 53 비용도 [비용-계산.md](비용-계산.md) 6장에 있다(2026-10-28).
 
 ### 6-1. 사용 시간
 
@@ -321,9 +335,10 @@ D안을 하려면 Terraform을 환경마다 두 묶음으로 나누고, 두 환�
 
 | 묶음 | 포함 리소스 | 주말에 |
 | --- | --- | --- |
-| 공용 묶음 (global) | ECR 리포지토리 5개, GitHub OIDC 공급자, Terraform state 저장소, Budgets | 그대로 둔다 |
+| 공용 묶음 (global) | ECR 리포지토리 5개(2차에 `notification-service` 추가로 6개), GitHub OIDC 공급자, Terraform state 저장소, Budgets | 그대로 둔다 |
 | 유지 묶음 (envs/<env>/persistent) | VPC·서브넷, RDS, SSM 접속용 t4g.nano, Secrets Manager, S3·CloudFront, SQS, IAM, EventBridge Scheduler, Loki 로그 버킷(S3), Cognito User Pool·트리거 Lambda | 그대로 둔다 (RDS·nano는 중지) |
 | 클러스터 묶음 (envs/<env>/cluster) | EKS, 노드 그룹, NAT Gateway, Helm으로 설치하는 것들(ArgoCD, LB Controller, metrics-server, External Secrets Operator). 관측성 스택은 ArgoCD가 `gitops` 레포에서 다시 설치한다 | 금요일에 삭제, 월요일에 생성 |
+| 2차에 어디 둘지 | Route 53 호스팅 영역 읽기·별칭 레코드는 유지 묶음, Cognito `bff` 클라이언트·알림 큐는 유지 묶음, gateway·notification IRSA는 클러스터 묶음. ElastiCache는 클러스터 묶음(주말에 같이 삭제)과 유지 묶음(계속 켜 둠) 중 비용을 보고 정한다 | |
 
 RDS는 유지 묶음, ECR은 공용 묶음에 두기 때문에 DB 데이터와 이미지는 주말 동안 그대로 남는다. Cognito User Pool도 유지 묶음이라 회원 계정이 남는다. Loki 로그도 S3에 있어서 남는다. Prometheus 지표(EBS 볼륨)는 주말마다, Zipkin 추적(메모리)은 매일 밤 노드가 0대가 될 때마다 사라진다(6-5-2). dev는 그 주 지표만 보면 되므로 받아들인다(지표를 남기려면 Thanos 같은 S3 보관 장치가 더 필요하다).
 
@@ -443,6 +458,8 @@ infra/
 
 dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데, 실제로는 첫 주에 dev 기반을 만들면서 켜는 시간이 짧아 4주분으로 잡았다. 남는 약 17만 원은 3번째 노드(부하 시험), 예측 실패, 시연 직전 상시 가동 대비 여유다. **두 환경을 상시로 켜 두면 5주에 약 800 USD라 지원금을 넘는다.** 그래서 끄는 장치(EventBridge Scheduler, 주말 삭제)는 빼면 안 된다. AWS Budgets는 10월·11월 월 예산 합계가 360 USD를 넘지 않게 나누고, 50·80·100%와 예측 초과 때 세 사람에게 메일을 보낸다.
 
+**2차 추가분 (2026-10-28):** ElastiCache Valkey `cache.t4g.micro`(서울 시간당 0.0192 USD)와 Route 53 도메인(`.com` 약 15 USD, 호스팅 영역 월 0.5 USD)을 더해도 약 10~37 USD로 지원금 안이다. 계산은 [비용-계산.md](비용-계산.md) 6장.
+
 ## 7. 이 구성에서 꼭 챙길 것
 
 | 항목 | 내용 | 담당 |
@@ -472,8 +489,11 @@ dev를 5주 내내 D안으로 돌리면 약 195(관측성 포함 약 200)인데,
 | `frontend` | S3 버킷, CloudFront 배포, OAC, CloudFront Function, ACM 인증서(us-east-1). `/api/*` 동작은 캐싱 끔, 오리진 요청 정책으로 `Authorization`·`Idempotency-Key` 헤더와 쿼리를 ALB까지 넘긴다 (`Idempotency-Key`는 order 주문 생성 중복 방지용) |
 | `ecr` | 리포지토리 5개와 이미지 보관 개수 정책 (`global` 묶음, 두 환경 공용) |
 | `budget` | AWS Budgets 알림 (`global` 묶음, 알림 메일은 tfvars 변수로 두고 실값은 커밋하지 않는다) |
-| `cognito` | 환경마다 User Pool 1개(이메일 로그인), 그룹 OWNER·CUSTOMER·ADMIN, 사용자 속성 `custom:storeId`, 브라우저용 앱 클라이언트(시크릿 없음), 가입 확인 트리거 Lambda와 실행 Role (유지 묶음) |
+| `cognito` | 환경마다 User Pool 1개(이메일 로그인), 그룹 OWNER·CUSTOMER·ADMIN, 사용자 속성 `custom:storeId`, 브라우저용 앱 클라이언트(시크릿 없음), 가입 확인 트리거 Lambda와 실행 Role (유지 묶음). 2차: `bff` 앱 클라이언트(시크릿을 Secrets Manager에, output에 내보내지 않음), Hosted UI 도메인, Google IdP |
 | `observability` | Loki 로그용 S3 버킷과 14일 수명 주기 정책 (유지 묶음) |
+| `cache` (2차, 새 모듈) | ElastiCache for Valkey `cache.t4g.micro` 1대, 서브넷 그룹, 보안 그룹(노드에서 6379만), TLS. 엔드포인트를 Secrets Manager `freshlink-<env>/order/redis`에 넣는다 |
+
+2차에 기존 모듈에 더할 것: `messaging`에 알림 큐 `<env>-notification-events`와 DLQ, DLQ CloudWatch 경보. `frontend`에 ACM 인증서(us-east-1 프로바이더 별칭)·별칭 도메인·응답 헤더 정책. `irsa`에 gateway(Cognito `AdminInitiateAuth`, 해당 User Pool만)와 notification-service Role, order·inventory에 알림 큐 `SendMessage`. `ecr`에 `notification-service`.
 
 Helm으로 설치하는 것
 

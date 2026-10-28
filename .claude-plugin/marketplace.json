@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "FreshLink 팀 공용 Claude Code 플러그인 모음",
-    "version": "0.3.1"
+    "version": "0.3.2"
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
     {
       "name": "freshlink-backend",
       "source": "./plugins/freshlink-backend",
-      "description": "백엔드(gateway, member/inventory/order-service, logistics-simulator, common) 작업용 PM 모드(/backend-pm)와 서브에이전트 7개, 파이프라인, 명령"
+      "description": "백엔드(gateway, member/inventory/order-service, logistics-simulator, notification-service, common) 작업용 PM 모드(/backend-pm)와 서브에이전트 7개, 파이프라인, 명령"
     }
   ]
 }
