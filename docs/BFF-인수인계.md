@@ -4,7 +4,7 @@
 
 > **맡아 주실 일은 두 가지입니다.** gateway에 BFF 로그인 API(`/api/auth/*`)를 만들고, 프론트에서 Amplify를 빼고 그 API를 쓰게 바꿉니다. 할 일 목록은 [멘토링-후-사람별-할-일.md](멘토링-후-사람별-할-일.md)의 "김경우 → BFF gateway 로직·BFF 프론트 로직·구글 로그인 화면"과 같습니다. 이 문서는 그 일을 혼자 할 수 있게 인프라가 준비한 값과 규칙을 모은 것입니다.
 >
-> 인프라(Cognito `bff` 클라이언트, 시크릿, gateway IRSA, ArgoCD·gitops 값, 구글 로그인)는 김진아가 끝냈습니다(infra README 4-17). **gateway 토큰 검증 값은 아직 `web` 클라이언트 그대로입니다.** 바꾸는 날은 같이 정합니다(8장).
+> 인프라(Cognito `bff` 클라이언트, 시크릿, gateway IRSA, ArgoCD·gitops 값, 구글 로그인)는 김진아가 끝냈습니다(infra README 4-17). **dev는 10/29에 gateway 토큰 검증 값을 `bff`로 바꿨습니다.** 그래서 경우님 BFF가 올라올 때까지 dev는 로그인이 안 되고, dev 화면은 가짜(mock) 로그인입니다. prod는 아직 `web`이고 경우님 코드가 main에 릴리스될 때 바꿉니다(8장).
 
 ---
 
@@ -47,7 +47,7 @@ sequenceDiagram
 | 환경 변수 (gateway 파드) | 내용 | 넣는 곳 |
 | --- | --- | --- |
 | `COGNITO_ISSUER_URI` | `https://cognito-idp.ap-northeast-2.amazonaws.com/<UserPoolId>` (지금과 같다) | infra root |
-| `COGNITO_CLIENT_ID` | 토큰 `aud` 확인용. **지금은 `web`**, 전환하는 날 `bff`로 바뀐다 | infra root |
+| `COGNITO_CLIENT_ID` | 토큰 `aud` 확인용. **dev는 `bff`(10/29 전환)**, prod는 아직 `web`이고 릴리스 때 `bff`로 바뀐다 | infra root |
 | `COGNITO_USER_POOL_ID` | User Pool ID (`AdminInitiateAuth`에 넣는다) | infra root |
 | `COGNITO_BFF_CLIENT_ID` | `bff` 클라이언트 ID (`freshlink-<env>-bff`) | infra root |
 | `COGNITO_CLIENT_SECRET` | `bff` 클라이언트 시크릿. **파일·로그에 쓰지 않는다** | gitops `extraSecrets` ← Secrets Manager `freshlink-<env>/gateway/cognito`(JSON `clientId`·`clientSecret`) |
@@ -89,14 +89,14 @@ $env:FRONTEND_URL = "http://localhost:5173"          # 구글 콜백이 Vite(517
    freshlink:
      cognito:
        issuer-uri: ${COGNITO_ISSUER_URI:}
-       client-id: ${COGNITO_CLIENT_ID:}            # aud 확인 (지금 web, 전환하는 날 bff)
+       client-id: ${COGNITO_CLIENT_ID:}            # aud 확인 (dev는 bff, prod는 릴리스 때 bff)
        bff-client-id: ${COGNITO_BFF_CLIENT_ID:}
        client-secret: ${COGNITO_CLIENT_SECRET:}    # 파일에 쓰지 않는다
        user-pool-id: ${COGNITO_USER_POOL_ID:}
        domain-url: ${COGNITO_DOMAIN_URL:}
      frontend-url: ${FRONTEND_URL:}
    ```
-3. **aud 확인을 둘 다 받게** (`CognitoJwtValidators`): 전환하는 날까지는 `client-id`(web)와 `bff-client-id` 중 하나면 통과시킨다. 그래야 Amplify 화면과 BFF 화면이 dev에서 같이 돈다. 전환하는 날 infra가 `COGNITO_CLIENT_ID`를 bff로 바꾸면 자연히 bff만 남는다.
+3. **aud는 지금처럼 `client-id` 하나만 본다** (`CognitoJwtValidators` 그대로): dev는 이미 `COGNITO_CLIENT_ID`가 bff라 web·bff를 "둘 다 받기"는 필요 없다. prod도 경우님 코드와 같은 릴리스에서 bff로 바뀐다.
 4. **`AuthController`** (`/auth/**`, 밖에서는 `/api/auth/**`). 라우트로 넘기지 않고 gateway가 직접 처리한다.
 
    | 경로 | Cognito 호출 | 응답 |
@@ -114,7 +114,7 @@ $env:FRONTEND_URL = "http://localhost:5173"          # 구글 콜백이 Vite(517
    - 가입·인증 코드·로그인: 사용자가 입력한 이메일
    - 갱신: 토큰의 `cognito:username`(이메일 가입자는 sub UUID, 구글 가입자는 `google_<숫자>`). 이메일을 넣으면 `Unable to verify secret hash`가 난다. 갱신할 때는 `fl_id`가 이미 만료돼 없을 수 있어서 로그인 때 `cognito:username`을 `fl_uid` 쿠키에 따로 둔다.
 6. **`SecurityConfig`**
-   - `BearerTokenResolver`: `Authorization` 헤더가 있으면 그것, 없으면 `fl_id` 쿠키. 전환 기간에 둘 다 받는다.
+   - `BearerTokenResolver`: `Authorization` 헤더가 있으면 그것, 없으면 `fl_id` 쿠키. 헤더는 PowerShell 시험용으로 남겨도 된다(bff 토큰만 통과한다).
    - 공개 경로에 `/api/auth/login`, `signup`, `confirm`, `refresh`, `logout`, `google`, `callback`을 더한다. `/api/auth/me`는 로그인 필요.
    - **CSRF**: POST·PUT·PATCH·DELETE는 `X-Requested-With: freshlink` 헤더가 없으면 403. 다른 사이트의 폼·이미지는 이 헤더를 붙일 수 없다(붙이려면 CORS 사전 요청이 필요한데 gateway는 CORS를 열지 않는다). `GET /auth/google`·`/auth/callback`은 브라우저 이동이라 검사하지 않는다.
 7. **`UserHeaderFilter`**: 구글 사용자의 `cognito:groups`에는 Cognito가 자동으로 넣는 `<UserPoolId>_Google` 그룹이 같이 온다. `X-User-Role`에는 `OWNER`·`CUSTOMER`·`ADMIN`만 남긴다(서비스가 모르는 값을 받지 않게).
@@ -200,13 +200,11 @@ try { Invoke-WebRequest -Uri "$base/api/auth/me" -WebSession $s -UseBasicParsing
 
 브라우저에서는 개발자 도구 → 애플리케이션 → 쿠키에서 `fl_*` 3개가 HttpOnly로 보이고, Local Storage에 토큰이 없으면 성공입니다.
 
-## 8. 전환하는 날 (경우님 + 김진아)
+## 8. 전환 (dev는 10/29 완료)
 
-1. 경우님: gateway BFF와 프론트 변경이 dev에 올라가고 7장이 통과한다.
-2. 김진아: infra `envs/<env>/cluster/helm.tf`의 `COGNITO_CLIENT_ID`를 bff로 바꾼다. 이때부터 Amplify 토큰(`web`)은 401이다.
-3. 김진아: `frontend-deploy.yml`의 `VITE_COGNITO_USER_POOL_ID`·`VITE_COGNITO_CLIENT_ID` 주입과 레포 변수를 지운다.
-4. 며칠 문제없으면 김진아가 `web` 클라이언트를 지운다. 경우님은 3장 3의 "둘 다 받기"와 `Authorization` 헤더 읽기를 정리한다(시험 토큰을 헤더로 보내는 README 4-7 명령은 bff 클라이언트로 바꾼다).
-5. dev에서 끝나면 prod도 같은 순서(dev → main 릴리스).
+1. **dev (10/29, 김진아 완료):** infra에서 gateway `COGNITO_CLIENT_ID`를 bff로 바꿨고, frontend에서 dev 빌드의 `VITE_COGNITO_*` 주입과 `DEV_COGNITO_*` 변수를 지웠다. 지금 dev는 Amplify 토큰이 401이고, dev 화면은 Cognito 값이 없어 가짜(mock) 로그인이다(`store.ts`). 경우님 BFF gateway·프론트가 dev에 올라가면 7장으로 확인한다.
+2. **prod (경우님 코드 릴리스 때, 김진아):** dev→main 릴리스와 같은 날 infra `envs/prod/cluster/helm.tf`의 `COGNITO_CLIENT_ID`를 bff로 바꾸고, `frontend-deploy.yml`의 main용 `PROD_COGNITO_*` 주입과 변수를 지운다. 경우님 코드 없이 main에 릴리스하면 prod 로그인이 깨지므로 이 순서를 지킨다.
+3. 며칠 문제없으면 김진아가 `web` 클라이언트를 지운다(infra README 4-7의 시험 토큰 명령도 bff 클라이언트로 바꾼다).
 
 ## 9. 알아 둘 한계
 
