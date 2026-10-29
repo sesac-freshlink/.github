@@ -64,7 +64,7 @@ sequenceDiagram
 | OAuth (구글) | code 흐름, 범위 `openid email profile`, IdP `COGNITO`·`Google` |
 | 콜백 주소 | dev `https://<dev 프론트>/api/auth/callback`, `http://localhost:5173/api/auth/callback` · prod `https://<prod 프론트>/api/auth/callback` |
 | 로그아웃 주소 | 콜백 주소의 `/api/auth/callback` 자리에 `/login` |
-| 가입 확인 Lambda | 직접 가입(`PostConfirmation_ConfirmSignUp`)이면 **무조건 `CUSTOMER`**. 화면이 넘기는 `clientMetadata.role`은 보지 않는다(자기 가입으로 점주가 되는 것을 막는다). 그래서 `ClientMetadata`는 넘기지 않아도 된다. 구글 첫 로그인도 `CUSTOMER`가 되는 것을 확인했다(10/29 dev: 구글 첫 로그인 → CUSTOMER와 <UserPoolId>_Google). 서버 가입은 infra README 4-17의 4-(4)로 확인한다 |
+| 가입 확인 Lambda | 직접 가입(`PostConfirmation_ConfirmSignUp`)이면 **무조건 `CUSTOMER`**. 화면이 넘기는 `clientMetadata.role`은 보지 않는다(자기 가입으로 점주가 되는 것을 막는다). 그래서 `ClientMetadata`는 넘기지 않아도 된다. 서버 가입·구글 첫 로그인도 `CUSTOMER`가 되는 것을 확인했다(10/29 dev: 서버 가입 → CUSTOMER, 구글 첫 로그인 → CUSTOMER와 <UserPoolId>_Google) |
 
 **PC에서 gateway를 dev Cognito에 붙여 시험하기.** 팀원 프로필 `freshlink-dev`에 dev 시크릿 읽기와 dev User Pool `AdminInitiateAuth`가 있습니다. 쿠버네티스 값은 `kubectl`로 읽습니다(보기 권한).
 
