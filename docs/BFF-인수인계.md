@@ -64,7 +64,7 @@ sequenceDiagram
 | OAuth (구글) | code 흐름, 범위 `openid email profile`, IdP `COGNITO`·`Google` |
 | 콜백 주소 | dev `https://<dev 프론트>/api/auth/callback`, `http://localhost:5173/api/auth/callback` · prod `https://<prod 프론트>/api/auth/callback` |
 | 로그아웃 주소 | 콜백 주소의 `/api/auth/callback` 자리에 `/login` |
-| 가입 확인 Lambda | 직접 가입(`PostConfirmation_ConfirmSignUp`)이면 **무조건 `CUSTOMER`**. 화면이 넘기는 `clientMetadata.role`은 보지 않는다(자기 가입으로 점주가 되는 것을 막는다). 그래서 `ClientMetadata`는 넘기지 않아도 된다. 서버 가입·구글 첫 로그인도 `CUSTOMER`가 되는지 dev에서 확인한다(infra README 4-17의 4·5) |
+| 가입 확인 Lambda | 직접 가입(`PostConfirmation_ConfirmSignUp`)이면 **무조건 `CUSTOMER`**. 화면이 넘기는 `clientMetadata.role`은 보지 않는다(자기 가입으로 점주가 되는 것을 막는다). 그래서 `ClientMetadata`는 넘기지 않아도 된다. 구글 첫 로그인도 `CUSTOMER`가 되는 것을 확인했다(10/29 dev: 구글 첫 로그인 → CUSTOMER와 <UserPoolId>_Google). 서버 가입은 infra README 4-17의 4-(4)로 확인한다 |
 
 **PC에서 gateway를 dev Cognito에 붙여 시험하기.** 팀원 프로필 `freshlink-dev`에 dev 시크릿 읽기와 dev User Pool `AdminInitiateAuth`가 있습니다. 쿠버네티스 값은 `kubectl`로 읽습니다(보기 권한).
 
@@ -212,4 +212,4 @@ try { Invoke-WebRequest -Uri "$base/api/auth/me" -WebSession $s -UseBasicParsing
 
 - **CloudFront → ALB 구간은 아직 HTTP(80)**입니다(브라우저 → CloudFront는 HTTPS). 쿠키가 AWS 구간에서 평문으로 갑니다. 지금 Authorization 헤더도 같은 처지이고, 김진아의 도메인·ACM 할 일에서 ALB에 HTTPS를 붙여 막습니다.
 - Cognito 기본 메일은 하루 50통이고 Gmail 스팸함에 들어갈 수 있습니다(가입 인증 코드).
-- 구글 OAuth 앱은 "프로덕션"으로 게시해 두었습니다. `openid`·`email`·`profile` 말고 다른 범위를 더하면 구글 검토가 필요합니다.
+- 구글 OAuth 앱은 아직 "테스트" 상태라 테스트 사용자로 넣은 Gmail(김진아·경우님·태우님)만 구글 로그인이 됩니다. 다른 계정을 시험하려면 김진아에게 추가를 부탁해 주세요. 프로덕션 게시는 도메인을 산 뒤 홈페이지·개인정보처리방침 페이지와 함께 합니다.
