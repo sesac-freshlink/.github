@@ -2,7 +2,7 @@
 
 작성일: 2026-10-08 · 개정: 2026-10-20 (6-4에 묶음별로 실제 들어 있는 것 추가, 2장 노드 최소 0·일정 갱신, 6-5-2 관측 데이터가 남는 기간 추가) · 2026-10-17 (원칙 칸 추가: Terraform과 EventBridge가 맡는 일, 주말에만 클러스터를 지우는 이유 갱신, 6-4) · 2026-10-14 (dev·prod 두 환경, 켜는 시간 평일 09:00\~21:00, 관측성·Cognito·Secrets Manager·SSM 반영) · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)의 서비스 구성
 
-> **2026-10-28 2차 범위 반영:** 선착순 대기열용 ElastiCache for Valkey, notification-service(ECR·IRSA·DB·알림 큐), BFF용 Cognito `bff` 앱 클라이언트·gateway IRSA, Route 53 도메인·ACM·CloudFront 응답 헤더 정책, DLQ 경보가 더해진다. 아래 표에 "(2차)"로 표시했다. 사람별 할 일은 [멘토링-후-사람별-할-일.md](멘토링-후-사람별-할-일.md).
+> **2026-10-28 2차 범위 반영:** 선착순 대기열용 ElastiCache for Valkey, notification-service(ECR·IRSA·DB·알림 큐), BFF용 Cognito `bff` 앱 클라이언트·gateway IRSA, Route 53 도메인·ACM·CloudFront 응답 헤더 정책, DLQ 경보가 더해진다. 아래 표에 "(2차)"로 표시했다. 사람별 할 일은 [할일/2차-사람별-할-일.md](../할일/2차-사람별-할-일.md).
 
 MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수량을 정리했다. 결론은 **환경마다 EKS 워커 노드 t3.large 2대 + RDS db.t4g.small 1대**다. 이 구성이면 앱 파드를 서비스별로 1\~2개씩 띄우고 관측성 스택까지 올려도 여유가 남는다. 환경은 **dev와 prod 두 개**이고, 같은 Terraform 모듈을 변수만 바꿔 두 번 만든다.
 
@@ -57,7 +57,7 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 | 이미지 | ECR | 리포지토리 | 5 (두 환경 공용) | gateway, member-service, inventory-service, order-service, logistics-simulator |
 | 보안 | IRSA (IAM Role) | 서비스별 | 4 | SQS 접근 권한 분리 (gateway 제외, 자기 환경 큐만). member-service Role에는 User Pool 속성 변경 권한만 추가 |
 | 보안 | Secrets Manager | 비밀 | 앱 DB 비밀번호 3 + 토스 테스트 키 1 | External Secrets Operator가 읽어 파드의 Kubernetes Secret으로 넣는다 |
-| 인증 | Amazon Cognito User Pool | 그룹 3(OWNER, CUSTOMER, ADMIN), 앱 클라이언트 1 (시크릿 없음) | 1 | 회원가입·로그인·JWT 발급 ([기술스택과 선택이유.md](기술스택과%20선택이유.md) 3-7) |
+| 인증 | Amazon Cognito User Pool | 그룹 3(OWNER, CUSTOMER, ADMIN), 앱 클라이언트 1 (시크릿 없음) | 1 | 회원가입·로그인·JWT 발급 ([기획/기술스택과-선택이유.md](%EA%B8%B0%EC%88%A0%EC%8A%A4%ED%83%9D%EA%B3%BC-%EC%84%A0%ED%83%9D%EC%9D%B4%EC%9C%A0.md) 3-7) |
 | 인증 | Lambda (Cognito 트리거) | Python, 128 MB | 1 | 가입 확인 시 CUSTOMER 그룹 배정 (일반 가입은 고객만) |
 | 운영 | EventBridge Scheduler | 일정 | 여러 개 | RDS·노드 그룹·SSM 접속용 인스턴스를 정해진 시각에 켜고 끈다. 클러스터 생성·삭제와 NAT 켜고 끄기 워크플로도 Lambda를 거쳐 정해진 시각에 실행한다 (6-5) |
 | 비용 | AWS Budgets | - | 1 (계정 전체) | 금액 초과 알림. 첫 리소스보다 먼저 만든다 |

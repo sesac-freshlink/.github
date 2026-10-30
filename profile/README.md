@@ -38,7 +38,7 @@
 | ④ prod 클러스터는 필요한 날(8일)만 켜기 | prod의 나머지 25일 | 약 135 USD |
 | **합계** |  | **약 525 USD** |
 
-①\~③은 dev·prod 둘 다에, ④는 prod에만 건다. 자세한 계산은 [비용 계산](https://github.com/sesac-freshlink/.github/blob/main/docs/비용-계산.md)에 있다.
+①\~③은 dev·prod 둘 다에, ④는 prod에만 건다. 자세한 계산은 [비용 계산](https://github.com/sesac-freshlink/.github/blob/main/docs/기획/비용-계산.md)에 있다.
 
 **그 결과** 765 USD에서 약 525 USD를 줄인다.
 
@@ -66,7 +66,7 @@
 - **배포 여유 확보:** 앱 CPU 요청을 250m → 150m로 낮춰 롤링 배포 때 새 파드가 뜰 자리(약 0.75 vCPU)를 남겼다.
 - **밀려날 순서를 정했다:** 관측성 파드는 우선순위를 낮게 줘서, 자리가 모자라면 Grafana·Zipkin이 먼저 빠지고 앱은 남는다.
 
-> 근거와 계산: [비용 계산](https://github.com/sesac-freshlink/.github/blob/main/docs/비용-계산.md) · [AWS 리소스 계획](https://github.com/sesac-freshlink/.github/blob/main/docs/aws-리소스-계획.md) 3장(노드 산정)
+> 근거와 계산: [비용 계산](https://github.com/sesac-freshlink/.github/blob/main/docs/기획/비용-계산.md) · [AWS 리소스 계획](https://github.com/sesac-freshlink/.github/blob/main/docs/기획/aws-리소스-계획.md) 3장(노드 산정)
 
 #### 🔔 알림: 문제와 배포 결과는 디스코드로 바로 온다
 
@@ -75,15 +75,15 @@
 
 | #dlq-알림 | #배포-알림 |
 | --- | --- |
-| ![DLQ 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/discord/dlq-alert.png) | ![배포 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/discord/deploy-alert.png) |
+| ![DLQ 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/팀원-가이드/images/dlq-alert.png) | ![배포 알림](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/팀원-가이드/images/deploy-alert.png) |
 
-> 설정 방법: [팀원 가이드 6 디스코드 알림](https://github.com/sesac-freshlink/.github/blob/main/docs/팀원-가이드-6-디스코드-알림.md)
+> 설정 방법: [팀원 가이드 6 디스코드 알림](https://github.com/sesac-freshlink/.github/blob/main/docs/팀원-가이드/6-디스코드-알림.md)
 
 ## 아키텍처
 
-![FreshLink 아키텍처 구조도](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/architecture/architecture.png)
+![FreshLink 아키텍처 구조도](https://raw.githubusercontent.com/sesac-freshlink/.github/main/docs/기획/architecture/architecture.png)
 
-번호별 흐름 설명: [docs/architecture](https://github.com/sesac-freshlink/.github/tree/main/docs/architecture)
+번호별 흐름 설명: [docs/기획/architecture](https://github.com/sesac-freshlink/.github/tree/main/docs/기획/architecture)
 
 ## 레포지토리
 

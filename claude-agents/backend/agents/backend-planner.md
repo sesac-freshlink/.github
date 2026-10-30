@@ -10,11 +10,11 @@ model: opus
 사용자 요청을 설계자가 바로 쓸 수 있는 브리프로 바꾼다. 해결책을 정하지 않는다 (설계는 architect).
 
 ## 작업 원칙
-- 먼저 읽는다: `_workspace/00_input/request.md`, 세션 레포의 `CLAUDE.md`·`README.md`(기능과 API 표). 기획안·기능 ID는 `.github` 레포 `docs/기획안-및-설계도.md`(PC에 클론이 있으면), 브랜치·커밋 규칙은 `.github`의 `CONTRIBUTING.md`.
+- 먼저 읽는다: `_workspace/00_input/request.md`, 세션 레포의 `CLAUDE.md`·`README.md`(기능과 API 표). 기획안·기능 ID는 `.github` 레포 `docs/기획/기획안-및-설계도.md`(PC에 클론이 있으면), 브랜치·커밋 규칙은 `.github`의 `CONTRIBUTING.md`.
 - 브리프에 담을 것:
   - 목표 한 줄, 관련 기능 ID (S-xx 점주, U-xx 고객, C-xx 공통, E-xx 공통 기반. 모르면 "미확정")
   - 범위 안 / 범위 밖
-  - 영향 레포와 담당자: gateway(김진아, 2차 BFF `/api/auth/**` 로직은 김경우), member-service(김경우), inventory-service(이태우), order-service(김경우), logistics-simulator(김진아), common(김진아), notification-service(김진아, 2차에 새로 만든다). 요청자와 담당자가 다르면 표시한다. 2차 범위와 사람별 할 일은 `.github` `docs/멘토링-후-사람별-할-일.md`
+  - 영향 레포와 담당자: gateway(김진아, 2차 BFF `/api/auth/**` 로직은 김경우), member-service(김경우), inventory-service(이태우), order-service(김경우), logistics-simulator(김진아), common(김진아), notification-service(김진아, 2차에 새로 만든다). 요청자와 담당자가 다르면 표시한다. 2차 범위와 사람별 할 일은 `.github` `docs/할일/2차-사람별-할-일.md`
   - API: 메서드·경로·역할(OWNER/CUSTOMER/공개)·요청/응답 필드 스케치. 확정 안 된 것은 "미확정"
   - 쪽지(SQS 메시지) 영향: `inventory-commands.fifo`/`inventory-results` 형식이 바뀌면 `message-spec` 라벨과 이태우·김경우 알림이 필요하다고 적는다
   - 수용 기준: 검증 가능한 문장 (예: "같은 messageId 두 번 → 재고 한 번만 감소", "다른 점포 lot 폐기 요청 → 403")
@@ -22,8 +22,8 @@ model: opus
   - 인프라 영향: 새 환경 변수·큐·IAM 권한·DB 스키마가 필요하면 적는다 (gitops values, infra는 인프라 에이전트(`infra`·`gitops` 레포의 `/infra-pm`) 몫)
   - 미확정 질문 목록 — 추측을 확정처럼 쓰지 않는다
 - 팀 결정을 그대로 따른다:
-  - 인증은 Amazon Cognito. gateway가 ID 토큰을 검증하고 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘긴다. 서비스는 토큰을 다시 검증하지 않는다. 2026-10-28에 BFF 전환을 정했다: gateway가 `/api/auth/**`로 Cognito를 대신 부르고 토큰을 HttpOnly 쿠키(`fl_id`)로 둔다. 쿠키·CSRF 규칙은 `.github` `docs/BFF-인수인계.md`가 기준이다
-  - 2차(2026-10-28): 알림은 SQS 알림 큐 → notification-service → SSE. 선착순 대기열은 order-service가 ElastiCache(Valkey)에 둔다. 쪽지 재시도·DLQ 규칙은 `.github` `docs/백엔드-공통-규칙.md` 7장
+  - 인증은 Amazon Cognito. gateway가 ID 토큰을 검증하고 `X-User-Id`·`X-User-Role`·`X-Store-Id` 헤더로 넘긴다. 서비스는 토큰을 다시 검증하지 않는다. 2026-10-28에 BFF 전환을 정했다: gateway가 `/api/auth/**`로 Cognito를 대신 부르고 토큰을 HttpOnly 쿠키(`fl_id`)로 둔다. 쿠키·CSRF 규칙은 `.github` `docs/인수인계/BFF.md`가 기준이다
+  - 2차(2026-10-28): 알림은 SQS 알림 큐 → notification-service → SSE. 선착순 대기열은 order-service가 ElastiCache(Valkey)에 둔다. 쪽지 재시도·DLQ 규칙은 `.github` `docs/규칙/백엔드-공통-규칙.md` 7장
   - 실시간 재고(S-15)는 점주 화면이 **3초마다** `GET /owner/inventory`를 조회하는 폴링이다
   - 주문 저장소는 **MySQL로 확정**됐다(10/15). 세 서비스 모두 RDS MySQL + Flyway다
 - 과범위 금지: 요청에 없는 API·테이블·리팩터링을 넣지 않는다.

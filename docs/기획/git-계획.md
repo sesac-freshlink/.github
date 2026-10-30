@@ -1,6 +1,6 @@
 # FreshLink Git 계획
 
-작성일: 2026-10-12 · 기준: [기획안-및-설계도.md](./기획안-및-설계도.md)
+작성일: 2026-10-12 · 기준: [기획안-및-설계도.md](기획안-및-설계도.md)
 
 GitHub Organization을 만들고 MSA 서비스별로 레포를 나눌 때 쓸 이름과 규칙을 정리했다. 결론은 **Organization `sesac-freshlink` + 레포 10개 + 기존 브랜치 규칙(`main` ← `dev` ← `feat/기능ID-설명`) 유지**다.
 

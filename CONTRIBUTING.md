@@ -118,7 +118,7 @@ AWS 키, 토스 키는 **절대 커밋하지 않는다.** (JWT 서명 키는 없
 ## 9. Claude Code 에이전트 (선택, 2026-10-28)
 
 - **에이전트·스킬·명령 md 파일을 레포에 넣어 쓰는 것은 필수가 아니다.** 쓰지 않아도 되고, 레포에 복사하는 PR을 올리지 않아도 된다.
-- 쓰고 싶으면 `.github` 레포 `claude-agents/`의 원본을 그 레포 `.claude/`에 복사한다(방법은 [`docs/ai-agents.md`](docs/ai-agents.md) 2장). 플러그인(marketplace) 방식은 너무 느려서 쓰지 않는다.
+- 쓰고 싶으면 `.github` 레포 `claude-agents/`의 원본을 그 레포 `.claude/`에 복사한다(방법은 [`docs/팀원-가이드/ai-agents.md`](docs/팀원-가이드/ai-agents.md) 2장). 플러그인(marketplace) 방식은 너무 느려서 쓰지 않는다.
 - 에이전트를 고칠 때는 `.github`의 원본을 먼저 고치고 PR로 합친다. 레포 하나에만 필요한 규칙은 그 레포 `CLAUDE.md`에 쓴다.
 
 ## 10. 막히면
