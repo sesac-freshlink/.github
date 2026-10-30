@@ -26,7 +26,7 @@ model: opus
    - destroy를 막는 것: LB Controller가 만든 ALB·타깃그룹·보안 그룹, ENI, PVC/EBS, finalizer, `envs/<env>/cluster/` 안의 `prevent_destroy`·`deletion_protection`
    - 월요일 apply 후 사람 손이 필요한 단계가 생김 (ArgoCD 부트스트랩, 수동 시크릿 등). prod를 켜고 끌 때도 같다
    - 켜고 끄기 스케줄(EventBridge·Actions)과 리소스 이름·태그 불일치
-3. **비용** — 인스턴스 타입·노드 수·NAT 개수·RDS 크기 변경, 새 시간당 과금 리소스, Budgets 누락, prod를 상시 켜 두는 변경(설계에 없는 prod 켜기 cron 포함). `.github` 레포 `docs/aws-리소스-계획.md` 6-6 dev·prod 합계(약 205~240 USD)·Budgets(10·11월 합계 360 USD)와 비교
+3. **비용** — 인스턴스 타입·노드 수·NAT 개수·RDS 크기 변경, 새 시간당 과금 리소스, Budgets 누락, prod를 상시 켜 두는 변경(설계에 없는 prod 켜기 cron 포함). `.github` 레포 `docs/기획/aws-리소스-계획.md` 6-6 dev·prod 합계(약 205~240 USD)·Budgets(10·11월 합계 360 USD)와 비교
 4. **GitOps·CI 규칙** — `latest` 태그, `resources`/probe 누락, 서비스 하나 때문에 차트 분기, 클러스터 직접 적용 전제, ArgoCD 경로 오타, CI가 클러스터에 접근, `envs/dev`↔`envs/prod` values 키 불일치, 차트·모듈의 환경 분기(`if prod`), prod 태그를 다시 빌드하거나 손으로 수정, 이름에 환경 접두사 누락(`freshlink-<env>-`, `<env>-` 큐)
 5. **설계 이탈** — `_workspace/02_architect_design.md`와 다름
 6. **정확성** — 변수 기본값, 출력값 누락, 리전·AZ, cron(UTC ↔ 한국 시간) 변환 오류

@@ -10,7 +10,7 @@ model: opus
 브리프를 구현 가능한 설계로 바꾼다. 코드를 쓰지 않는다.
 
 ## 작업 원칙
-- 먼저 읽는다: `_workspace/01_brief.md`, 영향 레포의 `CLAUDE.md`·`README.md`, 관련 모듈·차트의 실제 코드, `.github` 레포 `docs/aws-리소스-계획.md` 2장(리소스·이름), 6-4(묶음·state 키), 6-5(켜고 끄기), 6-6(비용), 8장(모듈), `gitops/README.md` 3·4장(dev·prod 차이, 배포·승격), `.github` 레포 `docs/기술스택과 선택이유.md`.
+- 먼저 읽는다: `_workspace/01_brief.md`, 영향 레포의 `CLAUDE.md`·`README.md`, 관련 모듈·차트의 실제 코드, `.github` 레포 `docs/기획/aws-리소스-계획.md` 2장(리소스·이름), 6-4(묶음·state 키), 6-5(켜고 끄기), 6-6(비용), 8장(모듈), `gitops/README.md` 3·4장(dev·prod 차이, 배포·승격), `.github` 레포 `docs/기획/기술스택과-선택이유.md`.
 - 설계에 레이어별로 담는다:
   - **영향 환경:** `global` / dev / prod. 환경마다 다른 값은 변수 파일이나 `envs/<env>/<svc>/values.yaml`로만 낸다
   - **infra (Terraform):** 루트(`global/` = 두 환경 공용, `envs/<env>/persistent/` = 주말에도 유지, `envs/<env>/cluster/` = dev는 금요일 삭제·월요일 생성, prod는 켜는 날만), state 키(`global`, `<env>/persistent`, `<env>/cluster`), 모듈(`modules/<name>`) 신규/수정, 변수·출력값, 리소스 이름(`freshlink-<env>-<이름>`)·태그, `cluster`가 같은 환경 `persistent`(와 `global`) 값을 읽는 방법(`terraform_remote_state` 또는 data source — 하드코딩 금지). dev↔prod 참조 금지, 모듈 안 환경 분기 금지

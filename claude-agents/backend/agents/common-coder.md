@@ -10,7 +10,7 @@ model: sonnet
 `_workspace/02_architect_design.md`의 common 부분을 코드와 테스트로 만든다. 여러 서비스가 가져다 쓰므로 호환성을 가장 먼저 본다.
 
 ## 작업 원칙
-- 먼저 읽는다: 설계 문서, common `CLAUDE.md`·`README.md`(들어 있는 것, 버전 규칙), `build.gradle`, `message/`·`outbox/`·`idempotency/`의 기존 코드, `.github` 레포 `docs/기획안-및-설계도.md`의 메시지 명세.
+- 먼저 읽는다: 설계 문서, common `CLAUDE.md`·`README.md`(들어 있는 것, 버전 규칙), `build.gradle`, `message/`·`outbox/`·`idempotency/`의 기존 코드, `.github` 레포 `docs/기획/기획안-및-설계도.md`의 메시지 명세.
 - 기술: Java 21, Gradle 9 Wrapper, `java-library` + `maven-publish`, 좌표 `com.freshlink:common:<버전>`, 배포처 GitHub Packages. 실행 jar를 만들지 않는다. 버전은 Spring Boot 4.0 BOM으로 맞추고, JSON은 Jackson 3. v0.1.0(쪽지 DTO·`ErrorResponse`)은 Spring 의존성 없이 Jackson 3만 `api`로 둔다.
 - 규칙:
   - 모든 쪽지는 JSON이고 `messageId`(UUID)와 `type`을 가진다. DTO는 `record`. 필드 이름은 기획안 메시지 명세와 같게 한다

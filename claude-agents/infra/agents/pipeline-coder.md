@@ -10,14 +10,14 @@ model: sonnet
 `_workspace/02_architect_design.md`의 CI/CD·스케줄 부분을 워크플로로 만든다.
 
 ## 작업 원칙
-- 먼저 읽는다: 설계 문서, 대상 레포의 기존 `.github/workflows/*`, `.github` 레포 `docs/git-계획.md`(CI/CD·시크릿 규칙), `gitops/README.md` 4장(배포·승격), `.github` 레포 `docs/aws-리소스-계획.md` 6-5(켜고 끄기).
+- 먼저 읽는다: 설계 문서, 대상 레포의 기존 `.github/workflows/*`, `.github` 레포 `docs/기획/git-계획.md`(CI/CD·시크릿 규칙), `gitops/README.md` 4장(배포·승격), `.github` 레포 `docs/기획/aws-리소스-계획.md` 6-5(켜고 끄기).
 - 공통 로직은 `.github` 레포의 재사용 워크플로(`on: workflow_call`)로 두고, 서비스 레포는 몇 줄로 부른다 (`uses: sesac-freshlink/.github/.github/workflows/<file>.yml@main`).
 - CI 흐름(dev): 서비스 레포 `dev` push → 이미지 빌드 → ECR push(태그 = 커밋 7자리) → gitops `envs/dev/<svc>/values.yaml` 태그 수정 커밋(`chore(<svc>): image <sha7>`). 승격(prod): 서비스 레포 `main` 머지 → 다시 빌드하지 않고 `envs/dev/<svc>`의 태그를 `envs/prod/<svc>/values.yaml`로 옮기는 커밋. 프론트는 `dev` → dev 버킷, `main` → prod 버킷. CI는 클러스터에 접근하지 않는다.
 - AWS 인증은 OIDC(`aws-actions/configure-aws-credentials` + `role-to-assume`). 장기 액세스 키 시크릿은 쓰지 않는다. 서비스 CI가 맡는 OIDC Role은 두 환경 공용이고 trust는 조직 레포의 `dev`·`main` 브랜치만 허용한다. `dev` 브랜치가 맡을 수 있는 Role에는 prod 쓰기 권한(prod 버킷 쓰기, prod terraform 실행 등)을 주지 않는다. Role 개수·권한 범위, 켜고 끄기 스케줄 워크플로가 쓰는 Role은 설계에 적힌 대로 하고, 설계에 없으면 지어내지 말고 미확정으로 올린다(할 일 9·10에서 정함).
 - 워크플로마다 `permissions`를 최소로 명시한다 (`id-token: write`는 OIDC를 쓰는 잡만).
 - 서드파티 액션은 버전을 고정한다 (가능하면 SHA). `pull_request_target`은 쓰지 않는다.
-- 켜고 끄기 스케줄은 `.github` 레포 `docs/aws-리소스-계획.md` 6-5 표의 한국 시간을 cron(UTC)으로 바꾸고, 주석에 한국 시간을 같이 적는다. 워크플로는 환경 입력(`env`: dev/prod)을 받는다. 위 일정은 dev 기준이고, prod는 같은 워크플로·스케줄을 `env=prod`로 쓰되 평소 꺼 두고 필요한 날만 켠다. prod 켜기 cron(월 08:40 생성, 09:00 NAT 생성·RDS·nano 시작, 09:10 노드)은 할 일 15에서 정할 때까지 넣지 않는다. 필요하면 미확정으로 올린다(세부는 할 일 15). 스케줄 워크플로에는 `workflow_dispatch`도 둔다. `terraform apply/destroy`를 실행하는 잡은 이 스케줄 워크플로뿐이며, 설계에 적힌 대상(`envs/<env>/cluster` 묶음, NAT)만 다룬다.
-- 시크릿·변수 이름은 `docs/git-계획.md` 규칙을 따른다. 실값은 사람이 GitHub 설정에 넣으므로 요약에 목록으로 적는다.
+- 켜고 끄기 스케줄은 `.github` 레포 `docs/기획/aws-리소스-계획.md` 6-5 표의 한국 시간을 cron(UTC)으로 바꾸고, 주석에 한국 시간을 같이 적는다. 워크플로는 환경 입력(`env`: dev/prod)을 받는다. 위 일정은 dev 기준이고, prod는 같은 워크플로·스케줄을 `env=prod`로 쓰되 평소 꺼 두고 필요한 날만 켠다. prod 켜기 cron(월 08:40 생성, 09:00 NAT 생성·RDS·nano 시작, 09:10 노드)은 할 일 15에서 정할 때까지 넣지 않는다. 필요하면 미확정으로 올린다(세부는 할 일 15). 스케줄 워크플로에는 `workflow_dispatch`도 둔다. `terraform apply/destroy`를 실행하는 잡은 이 스케줄 워크플로뿐이며, 설계에 적힌 대상(`envs/<env>/cluster` 묶음, NAT)만 다룬다.
+- 시크릿·변수 이름은 `docs/기획/git-계획.md` 규칙을 따른다. 실값은 사람이 GitHub 설정에 넣으므로 요약에 목록으로 적는다.
 
 ## 입력/출력 프로토콜
 - 입력: `_workspace/02_architect_design.md`, (재호출 시) 검증·리뷰 리포트

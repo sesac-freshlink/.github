@@ -22,7 +22,7 @@ description: FreshLink 인프라 작업(Terraform/infra, Helm·ArgoCD/gitops, Gi
 
 ## FreshLink 인프라 구조 (dev·prod)
 
-환경은 dev와 prod 두 개다. 같은 Terraform 모듈과 같은 Helm 차트를 쓰고 값(변수 파일, values)만 다르다. 사실의 원천은 `.github` 레포 `docs/aws-리소스-계획.md`(2장, 6-4~6-6, 8장)와 `gitops/README.md`(3·4장)다. 문서끼리 다르면 이 둘을 따르고 사용자에게 알린다.
+환경은 dev와 prod 두 개다. 같은 Terraform 모듈과 같은 Helm 차트를 쓰고 값(변수 파일, values)만 다르다. 사실의 원천은 `.github` 레포 `docs/기획/aws-리소스-계획.md`(2장, 6-4~6-6, 8장)와 `gitops/README.md`(3·4장)다. 문서끼리 다르면 이 둘을 따르고 사용자에게 알린다.
 
 | 항목 | 내용 |
 | --- | --- |
@@ -46,7 +46,7 @@ description: FreshLink 인프라 작업(Terraform/infra, Helm·ArgoCD/gitops, Gi
 | 비용 | dev·prod 합계 약 205~240 USD(5주), Budgets는 10·11월 합계 360 USD 이하 |
 | infra 브랜치 | `main` ← 작업 브랜치. 환경은 브랜치가 아니라 폴더로 나눈다 |
 
-아직 정하지 않은 값은 지어내지 않고 "할 일 N에서 정함"으로 적는다(`.github` 레포 `docs/jina/할일-목록.md`): state 키의 실제 `key` 문자열·잠금 방식·state 버킷 만드는 법(2), 팀원 IAM 그룹을 두는 묶음(2), 개발자별 큐 정확한 이름·`QUEUE_PREFIX` 형식(3·4), IRSA Role을 두는 묶음(9), OIDC Role 이름·개수·권한 범위(10), 스케줄 워크플로가 쓰는 Role(9·10), prod 켜는 방법 세부·prod 켜기 cron 여부(15).
+아직 정하지 않은 값은 지어내지 않고 "할 일 N에서 정함"으로 적는다(`.github` 레포 `docs/할일/김진아-할일-목록.md`): state 키의 실제 `key` 문자열·잠금 방식·state 버킷 만드는 법(2), 팀원 IAM 그룹을 두는 묶음(2), 개발자별 큐 정확한 이름·`QUEUE_PREFIX` 형식(3·4), IRSA Role을 두는 묶음(9), OIDC Role 이름·개수·권한 범위(10), 스케줄 워크플로가 쓰는 Role(9·10), prod 켜는 방법 세부·prod 켜기 cron 여부(15).
 
 ## 단계와 확인
 
