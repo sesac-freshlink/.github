@@ -52,7 +52,7 @@ sequenceDiagram
 | `COGNITO_BFF_CLIENT_ID` | `bff` 클라이언트 ID (`freshlink-<env>-bff`) | infra root |
 | `COGNITO_CLIENT_SECRET` | `bff` 클라이언트 시크릿. **파일·로그에 쓰지 않는다** | gitops `extraSecrets` ← Secrets Manager `freshlink-<env>/gateway/cognito`(JSON `clientId`·`clientSecret`) |
 | `COGNITO_DOMAIN_URL` | 로그인 도메인 `https://freshlink-<env>-auth.auth.ap-northeast-2.amazoncognito.com` (구글 로그인) | infra root |
-| `FRONTEND_URL` | 프론트 주소 `https://<id>.cloudfront.net` (구글 콜백 `redirect_uri`, 로그인 뒤 돌아갈 곳) | infra root |
+| `FRONTEND_URL` | 프론트 주소 dev `https://dev.getfreshlink.com`, prod `https://getfreshlink.com` (10/30부터, 구글 콜백 `redirect_uri`, 로그인 뒤 돌아갈 곳) | infra root |
 | `AWS_REGION` | `ap-northeast-2` | infra root |
 
 | 항목 | 값 |

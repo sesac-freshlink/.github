@@ -29,7 +29,7 @@
 | dev 클러스터 (gateway·서비스 파드, NAT, 노드 2대) | **없다.** 금요일 21:05에 통째로 지운다 | GitHub Actions `dev-cluster` → `create` |
 | RDS (`freshlink-dev-mysql`) | 꺼져 있다 | AWS 콘솔 RDS → 시작 |
 | DB 접속용 서버 (`freshlink-dev-ssm-access`) | 꺼져 있다 | AWS 콘솔 EC2 → 인스턴스 시작 |
-| dev 화면 (https://dywjl1yyfi1z1.cloudfront.net) | 화면은 열리지만 `/api`는 안 된다 | 클러스터가 켜지면 된다 |
+| dev 화면 (https://dev.getfreshlink.com) | 화면은 열리지만 `/api`는 안 된다 | 클러스터가 켜지면 된다 |
 
 무엇을 할지에 따라 켤 것이 다르다.
 
@@ -116,12 +116,12 @@ RDS·서버 켜기는 평소 쓰는 `freshlink-<이름>` 계정(`freshlink-dev` 
 PowerShell을 열고 친다.
 
 ```powershell
-try { Invoke-RestMethod "https://dywjl1yyfi1z1.cloudfront.net/api/members/me" } catch { $_.Exception.Response.StatusCode.value__ }
+try { Invoke-RestMethod "https://dev.getfreshlink.com/api/members/me" } catch { $_.Exception.Response.StatusCode.value__ }
 ```
 
 - **`401`이 나오면 성공이다.** 토큰 없이 보냈는데 gateway까지 닿았다는 뜻이다.
 - `502`·`503`·`504`면 아직 서비스 파드가 뜨는 중이다. 3~5분 뒤 다시 친다. 15분이 지나도 그대로면 7장을 본다.
-- 그다음 브라우저로 https://dywjl1yyfi1z1.cloudfront.net 을 열어 시드 계정으로 로그인해 본다([가이드 3의 2장](3-프론트-연동.md#2-시드-계정으로-로그인하기)).
+- 그다음 브라우저로 https://dev.getfreshlink.com 을 열어 시드 계정으로 로그인해 본다([가이드 3의 2장](3-프론트-연동.md#2-시드-계정으로-로그인하기)).
 
 > 서비스가 DB를 쓰므로, RDS가 `사용 가능`이 되기 전에 파드가 먼저 뜨면 잠깐 재시작을 반복할 수 있다. RDS가 켜지고 몇 분 지나면 저절로 정상이 된다.
 
