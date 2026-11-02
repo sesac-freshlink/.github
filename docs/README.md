@@ -42,6 +42,7 @@ FreshLink 팀이 같이 보는 문서는 모두 여기 있다. 처음 왔다면 
 | [5-주말-dev-켜기.md](팀원-가이드/5-주말-dev-켜기.md) | 주말에 dev 직접 켜고 끄기 | 현재 |
 | [6-디스코드-알림.md](팀원-가이드/6-디스코드-알림.md) | 배포 알림과 DLQ 알림이 오면 할 일 | 현재 |
 | [7-dev-valkey.md](팀원-가이드/7-dev-valkey.md) | dev Valkey(Redis) 접속 정보와 확인 방법 (선착순 대기열) | 현재 |
+| [8-grafana-aws-지표.md](팀원-가이드/8-grafana-aws-지표.md) | Grafana에서 RDS·SQS·ALB·CloudFront 지표 보기 (CloudWatch) | 현재 |
 | [ai-agents.md](팀원-가이드/ai-agents.md) | Claude Code 에이전트를 레포에 복사해 쓰는 법 (선택) | 현재 |
 
 담당은 모두 김진아다. 그림은 `팀원-가이드/images/`에 있다.
