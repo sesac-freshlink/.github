@@ -41,9 +41,9 @@ description: FreshLink 인프라 작업(Terraform/infra, Helm·ArgoCD/gitops, Gi
 | 배포 | 서비스 레포 `dev` 브랜치 push → 빌드 → ECR(태그 = 커밋 7자리) → gitops `envs/dev` 태그 커밋 → dev ArgoCD. 서비스 레포 `main` 머지 → 다시 빌드하지 않고 같은 이미지 태그를 `envs/prod`로 승격 커밋 → prod ArgoCD |
 | 프론트 | `dev` 브랜치 → dev 버킷, `main` → prod 버킷 |
 | CI 인증 | 서비스 CI가 맡는 GitHub OIDC Role은 두 환경 공용이다. 조직 레포의 `dev`·`main` 브랜치만 신뢰한다. `dev` 브랜치가 맡을 수 있는 Role에는 prod 쓰기 권한(prod 버킷 쓰기, prod terraform 실행 등)을 주지 않는다. Role 개수·권한 범위와 스케줄 워크플로가 쓰는 Role은 할 일 9·10에서 정함 |
-| 켜고 끄기 | dev: 평일 09:00~21:00만 켠다. 금 21:00 `cluster` 삭제, 월 08:40 생성, 매일 23:00 안전 끄기. prod: 같은 워크플로·스케줄을 `env=prod`로 쓰되 평소 꺼 두고 릴리스 확인·리허설·시연 날만 켠다. prod 켜기 cron은 할 일 15에서 정할 때까지 넣지 않는다 |
+| 켜고 끄기 | dev: 평일 09:00~21:00만 켠다. 금 21:00 `cluster` 삭제, 월 08:40 생성, 매일 23:00 안전 끄기. prod(2026-11-05부터): 데모 환경이라 주말 포함 매일 09:00~21:00 켠다. 일 21:05 `cluster` 삭제, 월 08:40 생성, 매일 23:00 안전 끄기(`aws-리소스-계획.md` 6-5-3). prod에는 GitHub 예약(cron)을 넣지 않고 EventBridge → workflow-dispatch Lambda만 쓴다 |
 | 권한 | 팀원 IAM 그룹 `freshlink-developers`는 dev 리소스만 쓴다. prod는 읽기 권한도 없다 |
-| 비용 | dev·prod 합계 약 205~240 USD(5주), Budgets는 10·11월 합계 360 USD 이하 |
+| 비용 | dev·prod 합계 약 310~340 USD(10/19~11/20, prod 매일 켜기·Valkey·도메인 포함), Budgets는 10·11월 합계 360 USD 이하 |
 | infra 브랜치 | `main` ← 작업 브랜치. 환경은 브랜치가 아니라 폴더로 나눈다 |
 
 아직 정하지 않은 값은 지어내지 않고 "할 일 N에서 정함"으로 적는다(`.github` 레포 `docs/할일/김진아-할일-목록.md`): state 키의 실제 `key` 문자열·잠금 방식·state 버킷 만드는 법(2), 팀원 IAM 그룹을 두는 묶음(2), 개발자별 큐 정확한 이름·`QUEUE_PREFIX` 형식(3·4), IRSA Role을 두는 묶음(9), OIDC Role 이름·개수·권한 범위(10), 스케줄 워크플로가 쓰는 Role(9·10), prod 켜는 방법 세부·prod 켜기 cron 여부(15).
@@ -137,7 +137,7 @@ ok / 고칠 점 / 멈춰
 ### 최종 보고
 
 - PR 링크 (레포별)
-- 사람이 직접 할 일: PR 합치기, 합친 뒤 `terraform apply` (어느 루트에서, 순서 `global` → `envs/<env>/persistent` → `envs/<env>/cluster`. prod `cluster`는 켜는 날에만), 그 밖에 수동 작업
+- 사람이 직접 할 일: PR 합치기, 합친 뒤 `terraform apply` (어느 루트에서, 순서 `global` → `envs/<env>/persistent` → `envs/<env>/cluster`. prod `cluster`는 켜져 있는 09:00~21:00에), 그 밖에 수동 작업
 - 다른 담당자에게 알릴 것
 
 ## 이어서 하기
