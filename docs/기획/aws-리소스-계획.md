@@ -75,7 +75,7 @@ MVP를 EKS 위 MSA로 띄울 때 필요한 AWS 리소스의 종류, 크기, 수�
 
 리소스 이름은 `freshlink-<env>-<이름>` 규칙을 따른다(예: `freshlink-dev-mysql`, `freshlink-prod-eks`). 서비스는 큐 이름·DB 주소·Cognito ID를 코드에 박지 않고 설정 값(환경 변수)으로 받는다.
 
-**Bastion 서버는 두지 않는다.** 노드 접속은 SSM Session Manager로 한다. RDS는 인터넷에 열리지 않으므로, DB 접속은 app 서브넷의 **t4g.nano 인스턴스를 거친 SSM Session Manager 포트 포워딩**으로 한다. 이 인스턴스는 보안 그룹 인바운드가 하나도 없고 SSH 포트도 열지 않는다. 팀원 IAM 권한은 dev 리소스로만 좁히고, prod는 읽기 권한도 주지 않는다.
+**Bastion 서버는 두지 않는다.** 노드 접속은 SSM Session Manager로 한다. RDS는 인터넷에 열리지 않으므로, DB 접속은 app 서브넷의 **t4g.nano 인스턴스를 거친 SSM Session Manager 포트 포워딩**으로 한다. 이 인스턴스는 보안 그룹 인바운드가 하나도 없고 SSH 포트도 열지 않는다. 팀원 IAM 권한은 dev 리소스로 좁히고, prod는 로그·관측성 보기(클러스터 Grafana·Zipkin port-forward, 서비스 파드·로그, `freshlink-prod-` 로그 그룹)만 준다(2026-11-13).
 
 ---
 
