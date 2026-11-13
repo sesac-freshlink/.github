@@ -117,8 +117,9 @@ AWS 키, 토스 키는 **절대 커밋하지 않는다.** (JWT 서명 키는 없
 
 ## 9. Claude Code 작업 방식 (2026-11-13)
 
-- 서브에이전트 여러 개에게 넘기는 방식(`/backend-pm`·`/infra-pm`, frontend 에이전트 8개)은 너무 느려서 없앴다. **Claude 하나(Opus 5.5)가 `freshlink-pipeline` 스킬 순서대로** 이해 → 계획 → 구현 → 검증 → 자체 리뷰 → 커밋·PR을 한다. 작은 일은 계획·리뷰를 건너뛴다.
-- 원본은 `.github` 레포 `claude-agents/`, 각 레포 `.claude/`에 같은 파일이 커밋되어 있다(갱신 방법은 [`docs/팀원-가이드/ai-agents.md`](docs/팀원-가이드/ai-agents.md) 2장).
+- 서브에이전트 여러 개에게 넘기는 방식(`/backend-pm`·`/infra-pm`)은 너무 느려서 없앴다. **Claude 하나(Opus 5.5)가 `freshlink-pipeline` 스킬 순서대로** 이해 → 계획 → 구현 → 검증 → 자체 리뷰 → 커밋·PR을 한다. 작은 일은 계획·리뷰를 건너뛴다.
+- `frontend`는 멘토님이 만든 자체 에이전트(`.claude/agents/` 8개)와 파이프라인을 그대로 쓴다. 이 방식은 `frontend`에 넣지 않는다.
+- 원본은 `.github` 레포 `claude-agents/`, 각 레포(`frontend` 제외) `.claude/`에 같은 파일이 커밋되어 있다(갱신 방법은 [`docs/팀원-가이드/ai-agents.md`](docs/팀원-가이드/ai-agents.md) 2장).
 - 고칠 때는 `.github`의 원본을 먼저 고치고 PR로 합친다. 레포 하나에만 필요한 규칙은 그 레포 `CLAUDE.md`에 쓴다.
 
 ## 10. 막히면
