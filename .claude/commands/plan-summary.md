@@ -1,11 +1,11 @@
 ---
 description: terraform plan 결과를 PR 본문에 붙일 표로 요약한다
-argument-hint: "[plan 출력 파일 경로 (생략하면 _workspace/04_plan.txt 또는 대화에 붙여넣은 출력)]"
+argument-hint: "[plan 출력 파일 경로 (생략하면 대화에 붙여넣은 출력)]"
 ---
 
 `terraform plan` 출력을 PR 본문 "확인 방법"에 붙일 수 있게 요약한다. plan을 새로 실행하지 않는다.
 
-입력: `$ARGUMENTS` 경로의 파일. 없으면 `_workspace/04_plan.txt`, 그것도 없으면 사용자가 대화에 붙여넣은 출력.
+입력: `$ARGUMENTS` 경로의 파일. 없으면 사용자가 대화에 붙여넣은 출력.
 
 출력 (PR 본문에 그대로 붙일 Markdown, 평이한 한국어):
 

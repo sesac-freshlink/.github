@@ -236,11 +236,11 @@ DB는 Testcontainers MySQL 8.4, SQS는 `SqsTemplate` 목으로 합니다. CI(`bu
 
 ## 10. Claude Code로 진행한다면
 
-(선택) `common` 레포 `.claude/`에 백엔드 에이전트를 복사해 두었다면([ai-agents.md](../팀원-가이드/ai-agents.md) 2장, 2026-10-28부터 플러그인 대신 이 방식), `common` 레포 폴더에서 Claude Code를 열고 이렇게 시작하면 됩니다.
+작업할 레포 폴더에서 Claude Code 세션을 열고 아래처럼 부탁한다. 레포 `.claude/`의 `freshlink-pipeline` 스킬 순서대로 진행한다([ai-agents.md](../팀원-가이드/ai-agents.md), 2026-11-13부터 에이전트 하나 + 파이프라인 방식).
 
 ```
 .github 레포 docs/인수인계/common-v0.2.0.md 를 읽어.
-backend-pipeline 스킬 순서대로 common v0.2.0(Outbox·멱등)을 진행해.
+freshlink-pipeline 스킬 순서대로 common v0.2.0(Outbox·멱등)을 진행해.
 2장 기본값, 4장 동작, 9장 금지 사항을 그대로 지키고, 커밋·push·PR은 내가 말할 때만 해.
 ```
 
