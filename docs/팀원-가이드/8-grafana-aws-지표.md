@@ -6,7 +6,7 @@
 
 만드는 쪽은 infra README 4-23(읽기 전용 Role), gitops [`platform/observability/README.md`](https://github.com/sesac-freshlink/gitops/blob/main/platform/observability/README.md) 7장(데이터 소스·대시보드)에 있다. 여기는 **보는 법**만 적는다.
 
-상태(11/2): 코드 PR이 올라가 있다(infra [#67](https://github.com/sesac-freshlink/infra/pull/67), gitops [#17](https://github.com/sesac-freshlink/gitops/pull/17)). 합쳐지고 dev 클러스터에 적용되면 대시보드가 보인다. 그 전에는 대시보드 목록에 없다.
+상태(11/13): dev·prod 둘 다 적용되어 있다(infra [#67](https://github.com/sesac-freshlink/infra/pull/67), gitops [#17](https://github.com/sesac-freshlink/gitops/pull/17)).
 
 ---
 
@@ -22,7 +22,7 @@ AWS 지표는 Grafana가 볼 때마다 CloudWatch에서 바로 읽는다. 클러
 
 ## 2. 여는 법
 
-[가이드 4](4-관측성.md) 2장과 같다. 클러스터 관리자 권한(지금은 김진아 계정)으로 port-forward 한 PC에서만 열린다. 팀원 계정에는 EKS 권한이 없으니, 보고 싶으면 김진아에게 "AWS 대시보드 같이 봐 주세요"와 **시각**을 남겨 주세요.
+[가이드 4](4-관측성.md) 2장과 같다. 팀원 계정(`freshlink-dev` 프로필)으로 dev·prod 둘 다 직접 port-forward 해서 연다. 먼저 보고 싶은 환경으로 `aws eks update-kubeconfig`(가이드 4 2장)를 친 뒤 아래를 친다.
 
 ```powershell
 kubectl -n observability port-forward svc/kube-prometheus-stack-grafana 3000:80   # → http://localhost:3000
