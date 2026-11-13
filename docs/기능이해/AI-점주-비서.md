@@ -55,7 +55,7 @@ AI에 도구(함수 호출)를 주는 방식(질문에 따라 AI가 "판매 조�
 | 무엇 | 쓰는 것 | 이유 |
 | --- | --- | --- |
 | AI 모델 | Amazon Bedrock의 Claude Sonnet 5.5 | 별도 API 키 없이 우리 AWS 계정 IAM으로 부른다. 비용이 AWS 청구서에 같이 잡힌다 |
-| 모델 ID | `global.anthropic.claude-sonnet-5-5` (교차 리전 추론 프로필) | 서울 리전에는 최신 모델의 `apac.` 프로필이 없고 `global.`만 있다(11/13 확인). 여러 리전의 남는 용량으로 보내서 처리량 제한에 덜 걸린다 |
+| 모델 ID | `global.anthropic.claude-sonnet-5-5` (교차 리전 추론 프로필, 11/13 김진아 확정) | 서울 리전에는 최신 모델의 `apac.` 프로필이 없고 `global.`만 있다(11/13 확인). 여러 리전의 남는 용량으로 보내서 처리량 제한에 덜 걸린다 |
 | 대안 모델 | `global.anthropic.claude-haiku-5-5` (더 싸다), `anthropic.claude-sonnet-5` (서울 단일 리전) | 환경 변수 `BEDROCK_MODEL_ID` 하나로 바꾼다. 셋 다 11/13 직접 호출해 응답을 확인했다 |
 | 호출 방법 | AWS SDK for Java v2 `bedrockruntime`의 **Converse API** (`BedrockRuntimeClient.converse`) | 모델이 바뀌어도 요청 모양이 같다. Spring Cloud AWS와 같은 AWS SDK BOM 버전을 쓴다 |
 | 권한 | 기존 inventory-service **IRSA** Role에 Bedrock 호출 권한 추가 | 키를 코드나 시크릿에 두지 않는다. 파드가 ServiceAccount로 Role을 맡는다 (다른 AWS 권한과 같은 방식) |
@@ -231,7 +231,6 @@ sequenceDiagram
 
 | 무엇 | 누가 | 기본값 |
 | --- | --- | --- |
-| 모델: `global` Sonnet 5.5 그대로 vs 서울 단일 리전 Sonnet 5 | 김진아 | `global.anthropic.claude-sonnet-5-5` |
 | 버튼 질문 5개 문구 확정 | 김진아·김경우 | 1장 표 |
 | API 경로·요청·응답 칸 이름, gateway 경로 추가 | 이태우 | `POST /owner/assistant/ask` |
 | 패널 위치·모양 | 김경우 | 대시보드 오른쪽 |
