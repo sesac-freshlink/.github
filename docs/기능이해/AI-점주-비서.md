@@ -16,7 +16,7 @@
 | 질문 방식 | ① 자주 묻는 질문 5개 버튼 ② 직접 입력 (200자까지) |
 | 답 | 한국어 짧은 답 (몇 문장 + 필요하면 상품 목록) |
 | 화면 | 점주 화면의 AI 비서 패널 (이태우) |
-| API | `POST /owner/assistant/ask` (inventory-service, 이름은 이태우가 정한다) |
+| API | `POST /owner/inventory/assistant/ask` (inventory-service) |
 | 완료 기준 | 시연 점포에서 질문 5개가 모두 원장·재고와 맞는 답을 내고, 점포 데이터와 상관없는 질문은 정중히 거절하고, Bedrock이 실패해도 화면이 멈추지 않는다 |
 
 **자주 묻는 질문 5개 (버튼)**
@@ -111,9 +111,9 @@ BEDROCK_MODEL_ID: "global.anthropic.claude-sonnet-5-5"
 
 1. 의존성: `software.amazon.awssdk:bedrockruntime` (Spring Cloud AWS가 쓰는 AWS SDK BOM과 같은 버전).
 2. 설정: `BEDROCK_MODEL_ID`를 설정 클래스로 받는다. 로컬 실행처럼 값이 없으면 AI를 부르지 않고 4-3의 대체 답을 돌려준다.
-3. 점포 요약: `X-User-StoreId`의 점포 하나만 집계한다(4-1 모양). 점포별 10분 캐시.
+3. 점포 요약: `X-Store-Id`의 점포 하나만 집계한다(4-1 모양). 점포별 10분 캐시.
 4. 호출: `BedrockRuntimeClient.converse(...)`에 시스템 지시문(4-2) + 점포 요약 JSON + 질문을 보낸다. `maxTokens`는 1,000 정도.
-5. 타임아웃 20초, 재시도 1번. 실패·타임아웃이면 로그를 남기고 4-3의 대체 답을 돌려준다.
+5. 질문 하나 전체 25초 예산(CloudFront origin 응답 30초 안). 첫 호출 22초, 시간 초과면 재시도 없이 4-3의 대체 답, 스로틀링처럼 빨리 실패하면 남은 시간이 8초 이상일 때 한 번 재시도. 실패하면 로그를 남기고 대체 답을 돌려준다.
 6. 막기: 질문 200자 초과는 400. 점포당 하루 50번을 넘으면 429 ("오늘 질문 횟수를 다 썼어요").
 7. 동시 호출: 파드당 5개까지(세마포어). 넘으면 Bedrock을 부르지 않고 429 ("잠시 뒤 다시 물어봐 주세요").
 8. 하루 횟수 세기: 1차는 파드별 메모리 카운트로 둔다. 파드가 2개라 실제 한도는 대략 두 배가 된다. 정확히 세야 하면 DB에 점포·날짜별 카운트 표를 둔다.
@@ -129,8 +129,8 @@ sequenceDiagram
     participant DB as inventory DB
     participant B as Bedrock (Claude)
 
-    W->>G: POST /api/owner/assistant/ask {presetId 또는 question}
-    G->>I: X-User-StoreId 붙여 전달
+    W->>G: POST /api/owner/inventory/assistant/ask {presetId 또는 question}
+    G->>I: X-Store-Id 붙여 전달
     I->>I: 길이·하루 횟수 확인
     alt 점포 요약 캐시 없음 (10분)
         I->>DB: 원장 30일 집계, 재고, 안전재고, 임박·경과 lot
@@ -145,7 +145,7 @@ sequenceDiagram
 
 ```json
 {
-  "store": { "name": "역삼점", "now": "2026-11-20T14:05:00+09:00" },
+  "store": { "storeId": 1, "now": "2026-11-20T14:05:00+09:00" },
   "products": [
     {
       "productId": 12, "name": "매운 컵라면 115g", "category": "라면", "price": 1500,
@@ -251,7 +251,7 @@ sequenceDiagram
 | 무엇 | 누가 | 기본값 |
 | --- | --- | --- |
 | 버튼 질문 5개 문구 확정 | 김진아·이태우 | 1장 표 |
-| API 경로·요청·응답 칸 이름, gateway 경로 추가 | 이태우 | `POST /owner/assistant/ask` |
+| API 경로·요청·응답 칸 이름, gateway 경로 추가 | 이태우 | `POST /owner/inventory/assistant/ask` (gateway 경로 추가 없음) |
 | 패널 위치·모양 | 이태우 | 대시보드 오른쪽 |
 | 점포당 하루 질문 수 | 이태우 | 50번 |
 | 대화 이어 가기 (앞 질문 기억) | 시연 뒤 | 하지 않는다 |
@@ -276,7 +276,7 @@ sequenceDiagram
 
 | 종류 | 무엇을 | 확인할 것 |
 | --- | --- | --- |
-| 단위 | 점포 요약 만들기 | `X-User-StoreId` 점포만 집계한다(다른 점포 데이터가 섞이지 않는다). 요약에 고객 칸이 없다. 합계·평균이 원장과 맞는다 |
+| 단위 | 점포 요약 만들기 | `X-Store-Id` 점포만 집계한다(다른 점포 데이터가 섞이지 않는다). 요약에 고객 칸이 없다. 합계·평균이 원장과 맞는다 |
 | 단위 | 막기 | 200자 초과 400, 하루 횟수 초과 429, 동시 호출 초과 429, 기능 꺼짐 503 |
 | 통합 | Bedrock 호출 | `BedrockRuntimeClient`를 가짜로 바꿔 정상 답, 타임아웃, 스로틀링, 권한 오류일 때 `source = RULE` 대체 답으로 넘어가는지 |
 | 통합 | 캐시 | 같은 버튼을 10분 안에 두 번 누르면 Bedrock을 한 번만 부른다. 자유 질문은 캐시하지 않는다 |
